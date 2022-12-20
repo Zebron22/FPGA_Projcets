@@ -1,3 +1,4 @@
+//This file is implemented on a DE10-Lite FPGA
 module counter(i_clk, i_rst, i_inc, LEDR);
 	
 	//4-bit counter
