@@ -38,7 +38,6 @@ architecture Beh of Decoder is
             when "01111110" => decodeOut <= "1101"; -- key *
             when "01111101" => decodeOut <= "1110"; -- key 0
             when "01111011" => decodeOut <= "1111"; -- key #
-            -- when "01110111" => decodeOut <= "1111"; -- key D
             
             when others => decodeOut <= "1111"; -- key D is used as a default case
         end case;
