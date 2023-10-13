@@ -1,0 +1,32 @@
+
+****** PlanAhead v14.1.1 (64-bit)
+  **** Build 179419 by xbuild on Thu Apr 26 11:43:29 MDT 2012
+    ** Copyright 1986-1999, 2001-2012 Xilinx, Inc. All Rights Reserved.
+
+INFO: [Device-36] Loading parts and site information from C:/Xilinx/14.1/ISE_DS/PlanAhead/data/parts/arch.xml
+Parsing RTL primitives file [C:/Xilinx/14.1/ISE_DS/PlanAhead/data/parts/xilinx/rtl/prims/rtl_prims.xml]
+Finished parsing RTL primitives file [C:/Xilinx/14.1/ISE_DS/PlanAhead/data/parts/xilinx/rtl/prims/rtl_prims.xml]
+start_gui
+starting gui ...
+source C:/Users/jsackos/Desktop/Pmod_Demos/In_Progress/PmodKYPD/HDL/Nexys3/PmodKYPD_Demo/PmodKYPD_Source/pa.fromNetlist.tcl
+# create_project -name PmodKYPD -dir "C:/Users/jsackos/Desktop/Pmod_Demos/In_Progress/PmodKYPD/HDL/Nexys3/PmodKYPD_Demo/PmodKYPD_Source/planAhead_run_2" -part xc6slx16csg324-3
+Parsing template File [C:/Xilinx/14.1/ISE_DS/ISE\data\projnav\templates\verilog.xml].
+Finished parsing template File [C:/Xilinx/14.1/ISE_DS/ISE\data\projnav\templates\verilog.xml].
+Parsing template File [C:/Xilinx/14.1/ISE_DS/ISE\data\projnav\templates\vhdl.xml].
+Finished parsing template File [C:/Xilinx/14.1/ISE_DS/ISE\data\projnav\templates\vhdl.xml].
+Parsing template File [C:/Xilinx/14.1/ISE_DS/ISE\data\projnav\templates\ucf.xml].
+Finished parsing template File [C:/Xilinx/14.1/ISE_DS/ISE\data\projnav\templates\ucf.xml].
+# set_property design_mode GateLvl [get_property srcset [current_run -impl]]
+# set_property edif_top_file "C:/Users/jsackos/Desktop/Pmod_Demos/In_Progress/PmodKYPD/HDL/Nexys3/PmodKYPD_Demo/PmodKYPD_Source/PmodKYPD.ngc" [ get_property srcset [ current_run ] ]
+WARNING: [Designutils-342] File / dir doesn't exist, skipping: C:\Users\jsackos\Desktop\Pmod_Demos\In_Progress\PmodKYPD\HDL\Nexys3\PmodKYPD_Demo\PmodKYPD_Source\PmodKYPD.ngc
+# add_files -norecurse { {C:/Users/jsackos/Desktop/Pmod_Demos/In_Progress/PmodKYPD/HDL/Nexys3/PmodKYPD_Demo/PmodKYPD_Source} }
+# set_property target_constrs_file "Nexys3_Master.ucf" [current_fileset -constrset]
+Adding file 'C:\Users\jsackos\Desktop\Pmod_Demos\In_Progress\PmodKYPD\HDL\Nexys3\PmodKYPD_Demo\PmodKYPD_Source\Nexys3_Master.ucf' to fileset 'constrs_1'
+# add_files [list {Nexys3_Master.ucf}] -fileset [get_property constrset [current_run]]
+# link_design
+Design is defaulting to srcset: sources_1
+Design is defaulting to constrset: constrs_1
+Design is defaulting to project part: xc6slx16csg324-3
+exit
+INFO: [Common-206] Exiting PlanAhead...
+INFO: [Common-83] Releasing license: PlanAhead
