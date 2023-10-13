@@ -1,0 +1,4 @@
+The makefile has been modified to allow windows-installed modelsim to run on a WSL installation
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+place this makefile in the systems/cortex_m0_mcu/rtl_sim directory
+Follow the Arm DesignStart guidelines on their website: https://developer.arm.com/documentation/dui0926/a/using-the-simulation-environment/setting-up-the-simulation-environment?lang=en
