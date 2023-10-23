@@ -1,59 +1,116 @@
-----------------------------------------------------------------------------------
--- Company: Digilent Inc 2011
--- Engineer: Michelle Yu  
--- Create Date: 13:28:41 08/18/2011 
---
--- Module Name:    DisplayController - Behavioral 
--- Project Name: 	 PmodKYPD
--- Target Devices: Nexys 3 
--- Tool versions: Xilinx ISE Design Suite 13.2
---
--- Description: 
--- This file defines a DisplayController that controls the seven segment display that works with 
--- the output of the Decoder
--- Revision: 
--- Revision 0.01 - File Created
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+--use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
+use ieee.std_logic_misc.all;
+use ieee.numeric_std.all;
 
 entity DisplayController is
     Port ( 
-			  --output from the Decoder
-			  DispVal : in  STD_LOGIC_VECTOR (3 downto 0);
-			  --controls the display digits
-			  anode: out std_logic_vector(3 downto 0);
-			  --controls which digit to display
-           segOut : out  STD_LOGIC_VECTOR (6 downto 0)); 
+			  DispVal   : in  STD_LOGIC_VECTOR (3 downto 0);   --4-bit output from the PMOD Decoder
+			     anode  : out std_logic_vector(3 downto 0);    --controls the display digits 
+               segOut   : out  STD_LOGIC_VECTOR (6 downto 0);  --controls which digit to display
+               clk_100M : in std_logic;
+               trigger  : out std_logic);
+               
 end DisplayController;
 
 architecture Behavioral of DisplayController is
+    --------------------------------------------------------------
+    signal displayed_number: std_logic_vector(15 downto 0);   --Hex number converted from the PMOD. This number will be used in calculation
+    --------------------------------------------------------------
+
+    signal LED_BCD : std_logic_vector(3 downto 0);            --value to the LED (could be DispVal?)
+	signal refresh_counter: STD_LOGIC_VECTOR (19 downto 0);   -- creating 10.5ms refresh period
+    signal anode_active: std_logic_vector(1 downto 0);        -- the other 2-bit for creating 4 LED-activating signals
+    -- loops         0    ->  1  ->  2  ->  3
+    -- activates    LED1    LED2   LED3   LED4
+    
+    
 begin
-	-- only display the leftmost digit
-	anode<="1110";
-			
-
-	 with DispVal select
-		segOut <=  "1000000" when "0000", --0
-					  "1111001" when "0001", --1
-					  "0100100" when "0010", --2
-					  "0110000" when "0011", --3
-					  "0011001" when "0100", --4
-					  "0010010" when "0101", --5
-					  "0000010" when "0110", --6
-					  "1111000" when "0111", --7
-					  "0000000" when "1000", --8
-					  "0010000" when "1001", --9
-					  "0001000" when "1010", --A
-					  "0000011" when "1011", --B
-					  "1000110" when "1100", --C
-					  "0100001" when "1101", --D
-					  "0000110" when "1110", --E
-					  "0001110" when "1111", --F
-					  "0111111" when others;
 	
-end Behavioral;
+	
+	--convert DispVal from 4-bit to 16-bit hex number
+	process(DispVal) begin
+	   case DispVal is
+	       when "0000" => displayed_number <= x"0000";
+	       when "0001" => displayed_number <= x"0001";
+           when "0010" => displayed_number <= x"0002";
+           when "0011" => displayed_number <= x"0003";
+           when "0100" => displayed_number <= x"0004";
+           when "0101" => displayed_number <= x"0005";
+           when "0110" => displayed_number <= x"0006";
+           when "0111" => displayed_number <= x"0007";
+           when "1000" => displayed_number <= x"0008";   
+           when "1001" => displayed_number <= x"0009";
+           when "1010" => displayed_number <= x"000A";
+           when "1011" => displayed_number <= x"000B";
+           when "1100" => displayed_number <= x"000C";
+           when "1101" => displayed_number <= x"000D";
+           when "1110" => displayed_number <= x"000E";
+           when "1111" => displayed_number <= x"000F";
+           when others => displayed_number <= x"0000";
+	   end case;
+	end process;
+	
+	--shift register mechanicsm
+	--1. stores the value to another variable
+	--2. When a user presses another button, trigger something
+	--3. the trigger causes the something to place previous input digit on the second anode
+	
+	
+	-- Creating the refresh rate of 10.5ms
+	process(clk_100M) begin
+	   if (rising_edge(clk_100M)) then
+	       refresh_counter <= refresh_counter + '1';
+	   end if;
+	end process;
 
+	--enable the anodes to cycle through
+	anode_active <= refresh_counter(19 downto 18);
+	process(anode_active) begin
+		LED_BCD <= DispVal; --takes input from decoder to signal 
+	   case anode_active is
+	       when "00" =>
+	           anode <= "0111"; -- All anodes will cycle through
+	           LED_BCD <= displayed_number(15 downto 12);--ones
+	       when "01" =>
+	           anode <= "1011";
+	           LED_BCD <= displayed_number(11 downto 8); --tens
+	       when "10" =>
+	           anode <= "1101";
+	           LED_BCD <= displayed_number(7 downto 4);  --hundreds
+	       when "11" =>
+	           anode <= "1110";
+	           LED_BCD <= displayed_number(3 downto 0);  --thousands
+	       when others =>
+	           anode <= "1111";
+	   end case;
+	end process;
+
+	
+	
+    --decodes BCD to 7 segment display cathode patterns
+    process(LED_BCD) begin
+        case LED_BCD is
+            when "0000" => segOut <= "0000001"; -- "0"     
+            when "0001" => segOut <= "1001111"; -- "1" 
+            when "0010" => segOut <= "0010010"; -- "2" 
+            when "0011" => segOut <= "0000110"; -- "3" 
+            when "0100" => segOut <= "1001100"; -- "4" 
+            when "0101" => segOut <= "0100100"; -- "5" 
+            when "0110" => segOut <= "0100000"; -- "6" 
+            when "0111" => segOut <= "0001111"; -- "7" 
+            when "1000" => segOut <= "0000000"; -- "8"     
+            when "1001" => segOut <= "0000100"; -- "9" 
+            when "1010" => segOut <= "0000010"; -- a
+            when "1011" => segOut <= "1100000"; -- b
+            when "1100" => segOut <= "0110001"; -- C
+            when "1101" => segOut <= "1000010"; -- d
+            when "1110" => segOut <= "0110000"; -- E
+            when "1111" => segOut <= "0111000"; -- F
+            when others => segOut <= "0000000"; 
+        end case;
+    end process;
+    
+end Behavioral;
