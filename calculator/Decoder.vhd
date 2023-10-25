@@ -19,11 +19,12 @@ signal sclk :STD_LOGIC_VECTOR(19 downto 0);
 
 begin
 
+
 	process(clk)
 		begin 
 		if clk'event and clk = '1' then
-			-- 1ms
-			if sclk = "00011000011010100000" then 
+			--every 100,000 cycles (1ms) it checks if a Col is pressed
+			if sclk = "00011000011010100000" then      --originally  "00011000011010100000"  binary   
 				--C1
 				Col<= "0111";
 				sclk <= sclk+1;
@@ -32,19 +33,23 @@ begin
 				--R1
 				if Row = "0111" then
 					DecodeOut <= "0001";	--1
+					
 				--R2
 				elsif Row = "1011" then
 					DecodeOut <= "0100"; --4
+					
 				--R3
 				elsif Row = "1101" then
 					DecodeOut <= "0111"; --7
+					
 				--R4
 				elsif Row = "1110" then
 					DecodeOut <= "0000"; --0
+					
 				end if;
 				sclk <= sclk+1;
-			-- 2ms
-			elsif sclk = "00110000110101000000" then	
+			-- 2ms (200,000 cycles)
+			elsif sclk = "00110000110101000000" then	--originally "00110000110101000000" binary
 				--C2
 				Col<= "1011";
 				sclk <= sclk+1;
@@ -68,8 +73,8 @@ begin
 					
 				end if;
 				sclk <= sclk+1;	
-			--3ms
-			elsif sclk = "01001001001111100000" then 
+			--3ms (300,000 cycles)
+			elsif sclk = "01001001001111100000" then    --originally "01001001001111100000" binary
 				--C3
 				Col<= "1101";
 				sclk <= sclk+1;
@@ -93,8 +98,8 @@ begin
 					
 				end if;
 				sclk <= sclk+1;
-			--4ms
-			elsif sclk = "01100001101010000000" then 			
+			--4ms (400,000 Cycles)
+			elsif sclk = "01100001101010000000" then 		--originally "01100001101010000000" binary	
 				--C4
 				Col<= "1110";
 				sclk <= sclk+1;

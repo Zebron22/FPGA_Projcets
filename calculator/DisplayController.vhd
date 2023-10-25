@@ -1,3 +1,12 @@
+--Original codes can be found here: https://digilent.com/reference/pmod/pmodkypd/start?redirect=1
+--and here: https://www.fpga4student.com/2017/09/seven-segment-led-display-controller-basys3-fpga.html
+
+
+--Both codes have been drastically modified to fit this specific scenario. Key changes:
+--The Diligent PMOD application code only displayed on one of the anodes, while I modified the code to be compatible with all anodes by implementing a refresh rate
+--The Seven segment display orginally counted a number, but I modified it to take the input from the PMOD keypad (DispVal) instead. 
+
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 --use IEEE.STD_LOGIC_ARITH.ALL;
@@ -7,19 +16,20 @@ use ieee.numeric_std.all;
 
 entity DisplayController is
     Port ( 
-			  DispVal   : in  STD_LOGIC_VECTOR (3 downto 0);   --4-bit output from the PMOD Decoder
-			     anode  : out std_logic_vector(3 downto 0);    --controls the display digits 
-               segOut   : out  STD_LOGIC_VECTOR (6 downto 0);  --controls which digit to display
-               clk_100M : in std_logic;
-               trigger  : out std_logic);
+			  DispVal : in  STD_LOGIC_VECTOR (3 downto 0);   --4-bit output from the PMOD Decoder
+			    anode : out std_logic_vector(3 downto 0);    --controls the display digits 
+               segOut : out  STD_LOGIC_VECTOR (6 downto 0);  --controls which digit to display
+             trigger  : out std_logic; --will be used for debug
+             clk_100M : in std_logic);
                
 end DisplayController;
 
 architecture Behavioral of DisplayController is
     --------------------------------------------------------------
-    signal displayed_number: std_logic_vector(15 downto 0);   --Hex number converted from the PMOD. This number will be used in calculation
+    signal displayed_number: std_logic_vector(15 downto 0);   --Hex number converted from the PMOD 4 bit input. This number will be used in calculation
     --------------------------------------------------------------
-
+    
+    signal DispVal_16: std_logic_vector(15 downto 0);
     signal LED_BCD : std_logic_vector(3 downto 0);            --value to the LED (could be DispVal?)
 	signal refresh_counter: STD_LOGIC_VECTOR (19 downto 0);   -- creating 10.5ms refresh period
     signal anode_active: std_logic_vector(1 downto 0);        -- the other 2-bit for creating 4 LED-activating signals
@@ -27,38 +37,30 @@ architecture Behavioral of DisplayController is
     -- activates    LED1    LED2   LED3   LED4
     
     
+    signal DispVal_16_reg : std_logic_vector(15 downto 0);
+    
+    
+    --states controlled by trigger
+    --each time the trigger is activated, DispVal sends data to displayed_number_final
+    
+    
+    --fsm for trigger
+    type state_type is (state_0, state_1);
+    signal state: state_type;
+    
 begin
 	
 	
-	--convert DispVal from 4-bit to 16-bit hex number
-	process(DispVal) begin
-	   case DispVal is
-	       when "0000" => displayed_number <= x"0000";
-	       when "0001" => displayed_number <= x"0001";
-           when "0010" => displayed_number <= x"0002";
-           when "0011" => displayed_number <= x"0003";
-           when "0100" => displayed_number <= x"0004";
-           when "0101" => displayed_number <= x"0005";
-           when "0110" => displayed_number <= x"0006";
-           when "0111" => displayed_number <= x"0007";
-           when "1000" => displayed_number <= x"0008";   
-           when "1001" => displayed_number <= x"0009";
-           when "1010" => displayed_number <= x"000A";
-           when "1011" => displayed_number <= x"000B";
-           when "1100" => displayed_number <= x"000C";
-           when "1101" => displayed_number <= x"000D";
-           when "1110" => displayed_number <= x"000E";
-           when "1111" => displayed_number <= x"000F";
-           when others => displayed_number <= x"0000";
-	   end case;
-	end process;
+	--extend the DispVal to 16 bits to support 16 bits
+	DispVal_16 <= "000000000000" & DispVal;
+	displayed_number <= DispVal_16;
 	
-	--shift register mechanicsm
+	--planned shift register mechanicsm
 	--1. stores the value to another variable
 	--2. When a user presses another button, trigger something
 	--3. the trigger causes the something to place previous input digit on the second anode
 	
-	
+
 	-- Creating the refresh rate of 10.5ms
 	process(clk_100M) begin
 	   if (rising_edge(clk_100M)) then
