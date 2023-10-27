@@ -55,10 +55,58 @@ begin
 	DispVal_16 <= "000000000000" & DispVal;
 	displayed_number <= DispVal_16;
 	
+	
+	
+	
+	--Each time trigger is enabled, values are shifted 4 bits to the left
+	--Bits cannot be shifted more than 16. If bits are shifted bast 16, then bits reset back to the first 4 bits
+	
+	
+	--Each time a button is pressed, State changes from 00 to 01 and trigger is enabled
+	process(clk_100M) begin 
+	   if (rising_edge(clk_100M)) then
+	       case state is
+	       
+	       
+	           when state_0 =>
+	               if(DispVal_16 /= DispVal_16_reg and state = state_0) then
+	                   trigger <= '1';
+	                   state <= state_1;
+	                   DispVal_16_reg <= DispVal_16;
+	               else
+	                   trigger <= '0';
+	                   state <= state_0;
+	               end if;
+	                   
+	               
+	           when state_1 =>
+	               if(DispVal_16 /= DispVal_16_reg and state = state_1) then
+	                   trigger <= '0';
+	                   state <= state_0;
+	                   DispVal_16_reg <= DispVal_16;
+	               else
+	                   trigger <= '1';
+	                   state <= state_1;
+	               end if;
+	           
+	           --Have this state to prevent metastability
+	           when others =>
+	               state <= state_0;
+	               
+	        end case;
+	   end if;
+	end process;
+	
+	
+	
+	
+	
+	
 	--planned shift register mechanicsm
 	--1. stores the value to another variable
 	--2. When a user presses another button, trigger something
 	--3. the trigger causes the something to place previous input digit on the second anode
+	
 	
 
 	-- Creating the refresh rate of 10.5ms
