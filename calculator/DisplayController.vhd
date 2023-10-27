@@ -9,7 +9,6 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
---use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use ieee.std_logic_misc.all;
 use ieee.numeric_std.all;
@@ -19,95 +18,36 @@ entity DisplayController is
 			  DispVal : in  STD_LOGIC_VECTOR (3 downto 0);   --4-bit output from the PMOD Decoder
 			    anode : out std_logic_vector(3 downto 0);    --controls the display digits 
                segOut : out  STD_LOGIC_VECTOR (6 downto 0);  --controls which digit to display
-             trigger  : out std_logic; --will be used for debug
+               reset  : in std_logic; --will be used for debug
              clk_100M : in std_logic);
-               
 end DisplayController;
 
 architecture Behavioral of DisplayController is
     --------------------------------------------------------------
-    signal displayed_number: std_logic_vector(15 downto 0);   --Hex number converted from the PMOD 4 bit input. This number will be used in calculation
+    signal displayed_number: std_logic_vector(15 downto 0) := "0000000000000000";   -- Initialize to zero
     --------------------------------------------------------------
-    
-    signal DispVal_16: std_logic_vector(15 downto 0);
-    signal LED_BCD : std_logic_vector(3 downto 0);            --value to the LED (could be DispVal?)
 	signal refresh_counter: STD_LOGIC_VECTOR (19 downto 0);   -- creating 10.5ms refresh period
     signal anode_active: std_logic_vector(1 downto 0);        -- the other 2-bit for creating 4 LED-activating signals
-    -- loops         0    ->  1  ->  2  ->  3
-    -- activates    LED1    LED2   LED3   LED4
-    
-    
-    signal DispVal_16_reg : std_logic_vector(15 downto 0);
-    
-    
-    --states controlled by trigger
-    --each time the trigger is activated, DispVal sends data to displayed_number_final
-    
-    
-    --fsm for trigger
-    type state_type is (state_0, state_1);
-    signal state: state_type;
-    
+	signal LED_BCD : std_logic_vector(3 downto 0);           -- value to the LED
+    signal last_DispVal : std_logic_vector(3 downto 0);      -- to store last value of DispVal
+
 begin
-	
-	
-	--extend the DispVal to 16 bits to support 16 bits
-	DispVal_16 <= "000000000000" & DispVal;
-	displayed_number <= DispVal_16;
-	
-	
-	
-	
-	--Each time trigger is enabled, values are shifted 4 bits to the left
-	--Bits cannot be shifted more than 16. If bits are shifted bast 16, then bits reset back to the first 4 bits
-	
-	
-	--Each time a button is pressed, State changes from 00 to 01 and trigger is enabled
-	process(clk_100M) begin 
-	   if (rising_edge(clk_100M)) then
-	       case state is
+
+	-- Process to shift displayed_number and update with new DispVal
+	process(clk_100M) begin
+	   if rising_edge(clk_100M) then
+	       if DispVal /= last_DispVal then  -- Detecting new value in DispVal
+	           displayed_number <= displayed_number(11 downto 0) & DispVal;  -- Shift and add new value
+	           last_DispVal <= DispVal;  -- Update the last value
+	       end if;
+	   
+	   if reset = '1' then
+	       displayed_number <= (others => '0');
+	   end if;    
 	       
 	       
-	           when state_0 =>
-	               if(DispVal_16 /= DispVal_16_reg and state = state_0) then
-	                   trigger <= '1';
-	                   state <= state_1;
-	                   DispVal_16_reg <= DispVal_16;
-	               else
-	                   trigger <= '0';
-	                   state <= state_0;
-	               end if;
-	                   
-	               
-	           when state_1 =>
-	               if(DispVal_16 /= DispVal_16_reg and state = state_1) then
-	                   trigger <= '0';
-	                   state <= state_0;
-	                   DispVal_16_reg <= DispVal_16;
-	               else
-	                   trigger <= '1';
-	                   state <= state_1;
-	               end if;
-	           
-	           --Have this state to prevent metastability
-	           when others =>
-	               state <= state_0;
-	               
-	        end case;
 	   end if;
 	end process;
-	
-	
-	
-	
-	
-	
-	--planned shift register mechanicsm
-	--1. stores the value to another variable
-	--2. When a user presses another button, trigger something
-	--3. the trigger causes the something to place previous input digit on the second anode
-	
-	
 
 	-- Creating the refresh rate of 10.5ms
 	process(clk_100M) begin
@@ -116,34 +56,32 @@ begin
 	   end if;
 	end process;
 
-	--enable the anodes to cycle through
+	-- Enable the anodes to cycle through
 	anode_active <= refresh_counter(19 downto 18);
 	process(anode_active) begin
-		LED_BCD <= DispVal; --takes input from decoder to signal 
+		LED_BCD <= DispVal;  -- Take input from decoder to signal
 	   case anode_active is
 	       when "00" =>
-	           anode <= "0111"; -- All anodes will cycle through
-	           LED_BCD <= displayed_number(15 downto 12);--ones
+	           anode <= "0111";
+	           LED_BCD <= displayed_number(15 downto 12);  -- Ones
 	       when "01" =>
 	           anode <= "1011";
-	           LED_BCD <= displayed_number(11 downto 8); --tens
+	           LED_BCD <= displayed_number(11 downto 8);   -- Tens
 	       when "10" =>
 	           anode <= "1101";
-	           LED_BCD <= displayed_number(7 downto 4);  --hundreds
+	           LED_BCD <= displayed_number(7 downto 4);    -- Hundreds
 	       when "11" =>
 	           anode <= "1110";
-	           LED_BCD <= displayed_number(3 downto 0);  --thousands
+	           LED_BCD <= displayed_number(3 downto 0);    -- Thousands
 	       when others =>
 	           anode <= "1111";
 	   end case;
 	end process;
 
-	
-	
-    --decodes BCD to 7 segment display cathode patterns
+    -- Decodes BCD to 7 segment display cathode patterns
     process(LED_BCD) begin
         case LED_BCD is
-            when "0000" => segOut <= "0000001"; -- "0"     
+           when "0000" => segOut <= "0000001"; -- "0"     
             when "0001" => segOut <= "1001111"; -- "1" 
             when "0010" => segOut <= "0010010"; -- "2" 
             when "0011" => segOut <= "0000110"; -- "3" 
@@ -162,5 +100,6 @@ begin
             when others => segOut <= "0000000"; 
         end case;
     end process;
+
     
 end Behavioral;
