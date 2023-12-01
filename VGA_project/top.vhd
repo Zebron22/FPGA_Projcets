@@ -61,7 +61,7 @@ architecture Behavioral of top is
 	signal Decode : std_logic_vector(4 downto 0);
 	signal Decode_prev: std_logic_vector(4 downto 0) := "10000";	 
 
-	type   state_type is (reset, digit1, digit2, digit3, input3, input4, input5, input_final);
+	type   state_type is (reset, digit1, digit2, digit3, op, digit4, digit5, digit6, input_final);
 	signal state : state_type := reset; --used as a FSM for keypad inputs
 	
 	
@@ -88,10 +88,19 @@ architecture Behavioral of top is
 	--16 pixels over
 	signal charX5  : std_logic_vector(9 downto 0);
 
+	--16 pixels over
+	signal charX6  : std_logic_vector(9 downto 0);
+	
+	--16 pixels over
+	signal charX7  : std_logic_vector(9 downto 0);
+	
+	
 	signal charSel2: integer range 0 to 18 := 0; --selects character
 	signal charSel3: integer range 0 to 18 := 0; --selects character
 	signal charSel4: integer range 0 to 18 := 0; --selects character
 	signal charSel5: integer range 0 to 18 := 0; --selects character
+	signal charSel6: integer range 0 to 18 := 0; --selects character
+	signal charSel7: integer range 0 to 18 := 0; --selects character
 
 
 	signal red1, green1, blue1: std_logic_vector(3 downto 0);
@@ -99,11 +108,22 @@ architecture Behavioral of top is
 	signal red3, green3, blue3: std_logic_vector(3 downto 0);
 	signal red4, green4, blue4: std_logic_vector(3 downto 0);
 	signal red5, green5, blue5: std_logic_vector(3 downto 0);
+	signal red6, green6, blue6: std_logic_vector(3 downto 0);
+	signal red7, green7, blue7: std_logic_vector(3 downto 0);
 	
 	signal record_key : integer;	
 	signal save_number1 : integer;
 	signal save_number2 : integer;
-	signal add_out : integer;
+	
+	signal add_out    : integer;
+	signal sub_out    : integer;
+	signal multiply_2 : integer;
+	signal divide_2   : integer;
+	signal multiply_4 : integer;
+	signal divide_4   : integer;
+	signal add_1      : integer;
+	signal sub_1      : integer;
+	
 	
 begin
 	
@@ -111,6 +131,8 @@ begin
 	charX3 <= std_logic_vector(unsigned(charX2) + to_unsigned(20, charX'length));
 	charX4 <= std_logic_vector(unsigned(charX3) + to_unsigned(20, charX'length));
 	charX5 <= std_logic_vector(unsigned(charX4) + to_unsigned(20, charX'length));
+	charX6 <= std_logic_vector(unsigned(charX5) + to_unsigned(20, charX'length));
+	charX7 <= std_logic_vector(unsigned(charX6) + to_unsigned(20, charX'length));
 	
 	DecodedValue     : Decoder port map (clk => MAX10_CLK1_50, Row => Row, Col => Col, DecodeOut => Decode);
 	VideoSyncInstance: VideoSyncGenerator port map (clock25MHz => clock25MHz, vsync => VGA_VS, hsync => VGA_HS, x => x, y => y);
@@ -119,9 +141,12 @@ begin
 	PatternInstance3 : tvPattern port map (x => x, y => y, charX => charX3,  charY => charY,  red => red3, green => green3, blue => blue3, charSel => charSel3); --shifted to the right
 	PatternInstance4 : tvPattern port map (x => x, y => y, charX => charX4,  charY => charY,  red => red4, green => green4, blue => blue4, charSel => charSel4); --shifted to the right
 	PatternInstance5 : tvPattern port map (x => x, y => y, charX => charX5,  charY => charY,  red => red5, green => green5, blue => blue5, charSel => charSel5); --shifted to the right
+	PatternInstance6 : tvPattern port map (x => x, y => y, charX => charX6,  charY => charY,  red => red6, green => green6, blue => blue6, charSel => charSel6); --shifted to the right
+	PatternInstance7 : tvPattern port map (x => x, y => y, charX => charX7,  charY => charY,  red => red7, green => green7, blue => blue7, charSel => charSel7); --shifted to the right
+
 	
 	--controlling how the signal is displayed
-	process(x, y, red1, green1, blue1, red2, green2, blue2, red3, green3, blue3, red4, green4, blue4, red5, green5, blue5, charX2, charX3, charX4, charX5)
+	process(x, y, red1, green1, blue1, red2, green2, blue2, red3, green3, blue3, red4, green4, blue4, red5, green5, blue5, red6, green6, blue6, red7, green7, blue7, charX2, charX3, charX4, charX5, charX6, charX7)
 	begin
 		 if unsigned(x) < unsigned(charX2) then
 			  -- Use output from the first pattern
@@ -141,15 +166,27 @@ begin
 
 		elsif unsigned(x) < unsigned(charX5) then
 			-- Use output from the third pattern
-			VGA_R <= red4;
-			VGA_G <= green4;
-			VGA_B <= blue4;
+				VGA_R <= red4;
+				VGA_G <= green4;
+				VGA_B <= blue4;
 
+		elsif unsigned(x) < unsigned(charX6) then
+			-- Use output from the third pattern
+				VGA_R <= red5;
+				VGA_G <= green5;
+				VGA_B <= blue5;							
+				
+		elsif unsigned(x) < unsigned(charX7) then
+			-- Use output from the third pattern
+				VGA_R <= red6;
+				VGA_G <= green6;
+				VGA_B <= blue6;				
+				
 		 else
 			  -- Use output from the fourth pattern
-			  VGA_R <= red5;
-			  VGA_G <= green5;
-			  VGA_B <= blue5;
+			  VGA_R <= red7;
+			  VGA_G <= green7;
+			  VGA_B <= blue7;
 		 end if;
 	end process;
 
@@ -192,7 +229,7 @@ begin
 	end process;
 
 	--decoder
-	process(Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, state, KEY)
+	process(Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, state, KEY)
 	begin
 	case Decode_stable is 
 		when "00000" =>  charSel_store <= 0;  -- 0
@@ -221,7 +258,9 @@ begin
 	
 	
 	--displays the characters
-	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, KEY)
+	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, KEY)
+	variable verify_record_key: integer;
+	variable valid_range      : integer;
 	begin
 		if rising_edge(clock100ms) then
 			if Decode /= "10000" then
@@ -241,10 +280,25 @@ begin
 							charSel3 <= 0;
 							charSel4 <= 0;
 							charSel5 <= 0;
+							charSel6 <= 0;
+							charSel7 <= 0;
 							record_key   <= 0;
 							save_number1 <= 0;
 							save_number2 <= 0;
 							add_out <= 0;
+							verify_record_key := 0;
+							add_out   <= 0;
+							sub_out <= 0;
+							multiply_2 <= 0;
+							divide_2   <= 0;
+							multiply_4<= 0;
+							divide_4   <= 0;
+							add_1      <= 0;
+							sub_1      		<= 0;					
+							
+							
+							
+							
 							state           <= digit1;
 							
 
@@ -259,82 +313,149 @@ begin
 							end if;
 
 						when digit2 =>
-							--inter second digit
 							if Decode_stable /= Decode_prev then
-								record_key <= to_integer(unsigned(Decode_prev(3 downto 0))) * 10 + to_integer(unsigned(Decode_stable(3 downto 0))); -- New value
-								
-								
-								Decode_prev <= Decode_stable;
-								charSel2 <= CharSel_store;
-								state <= input3;
-							end if;						
-
-						when input3 =>
+								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+								 Decode_prev <= Decode_stable;
+								 charSel2 <= CharSel_store;
+								 state <= digit3;
+							end if;
+				
+							
+						when digit3 =>
+							if Decode_stable /= Decode_prev then
+								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+								--check if greater than 255
+								if verify_record_key > 255 then
+									--print on LCD screen "not allowed"
+									
+									state <= reset;
+								else
+									--record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+									record_key <= verify_record_key;
+									Decode_prev <= Decode_stable;
+									charSel3 <= CharSel_store;
+									state <= op;								
+								end if;
+							end if;
+							
+							
+						when op =>
 							save_number1 <= record_key; --saves the first number
 							-- Select the operation to use
 							if Decode_stable /= Decode_prev then
 								
 								case Decode_stable is
 									when "01010" => --add
-										charSel3 <= CharSel_store;
+										CharSel4 <= CharSel_store;
 										Decode_prev <= Decode_stable;
-										state <= input4;
+										state <= digit4;
 									
 									when "01011" => --subtract
-										charSel3 <= CharSel_store;
+										CharSel4 <= CharSel_store;
 										Decode_prev <= Decode_stable;
-										state <= input4;
+										state <= digit4;
 										
 									when "01100" => --multiply by 2
-										charSel3 <= CharSel_store;
-										
+										CharSel4 <= CharSel_store;
+										state <= input_final;
 										
 									when "01101" => --divide by 2
-										charSel3 <= CharSel_store;
-										
+										CharSel4 <= CharSel_store;
+										state <= input_final;
 										
 									when "01110" => --add1
-										charSel3 <= CharSel_store;
-										
+										CharSel4 <= CharSel_store;
+										state <= input_final;
 										
 									when "01111" => --subtract1
-										charSel3 <= CharSel_store;
-										
+										CharSel4 <= CharSel_store;
+										state <= input_final;
 										
 									when "10001" => --multiply4
-										charSel3 <= CharSel_store;
-										
+										CharSel4 <= CharSel_store;
+										state <= input_final;
 										
 									when "10010" => --divide4
-										charSel3 <= CharSel_store;
-										
+										CharSel4 <= CharSel_store;
+										state <= input_final;
 										
 									
 									when others => Decode_stable <= "10000";
 								end case;
 							
 							end if;
+	
 
-						when input4 =>
+						when digit4 =>
+							--enter first digit
 							if Decode_stable /= Decode_prev then
-								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
-								Decode_prev <= Decode_stable;
-								charSel4 <= CharSel_store;
-								state <= input5;
-							end if;
-
-						when input5 =>
-							if Decode_stable /= Decode_prev then
-								record_key <= to_integer(unsigned(Decode_prev(3 downto 0))) * 10 + to_integer(unsigned(Decode_stable(3 downto 0))); -- New value
+								
+								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
 								Decode_prev <= Decode_stable;
 								charSel5 <= CharSel_store;
-								state <= input_final;
+								state <= digit5;
 							end if;
-						
+
+						when digit5 =>
+							if Decode_stable /= Decode_prev then
+								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+								 Decode_prev <= Decode_stable;
+								 charSel6 <= CharSel_store;
+								 state <= digit6;
+							end if;
+				
+							
+						when digit6 =>
+							if Decode_stable /= Decode_prev then
+								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+								--check if greater than 255
+								if verify_record_key > 255 then
+									--print on LCD screen "not allowed"
+									
+									state <= reset;
+								else
+									--record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+									record_key <= verify_record_key;
+									Decode_prev <= Decode_stable;
+									charSel7 <= CharSel_store;
+									state <= input_final;								
+								end if;
+							end if;
+	
 						when input_final =>
 							save_number2 <= record_key;
 							if KEY = "01" then
-								add_out <= save_number1 + save_number2;
+								
+								case charSel4 is
+									when 10 =>
+										add_out <= save_number1 + save_number2;
+									
+									when 11 =>
+										sub_out <= save_number1 - save_number2;
+										
+									when 12 =>
+										multiply_2 <= save_number1 * 2;
+										
+									when 13 =>
+										--convert to slv and shift 1 to the right
+										--divide_2 <= save_number / 2;
+										
+									when 14 =>
+										add_1 <= save_number1 + 1;
+										
+									when 15 =>
+										sub_1 <= save_number1 - 1;
+										
+									when 16 =>
+										multiply_4 <= save_number1 * 4;
+										
+									when 17 =>
+										--convert to slv and shift 1 to the right
+										--divide_4 <= save_number1;
+										
+									when others => state <= input_final;
+								end case;
+								
 							end if;
 						
 							
@@ -350,8 +471,11 @@ begin
 
 
 	--LEDR <= std_logic_vector(to_unsigned(record_key, 8)); --8 bits (display LED for debugging)
+	--LEDR <= std_logic_vector(to_unsigned(save_number1, 8)); --8 bits (display LED for debugging)
+
 	--LEDR <= std_logic_vector(to_unsigned(save_number2, 8)); --8 bits (display LED for debugging)
-   LEDR <= std_logic_vector(to_unsigned(add_out, 8));
-	
+   --LEDR <= std_logic_vector(to_unsigned(add_out, 8));
+	LEDR <= std_logic_vector(to_unsigned(sub_out, 8));
+
 	
 end Behavioral;
