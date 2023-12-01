@@ -260,7 +260,7 @@ begin
 	--displays the characters
 	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, KEY)
 	variable verify_record_key: integer;
-	variable valid_range      : integer;
+	variable valid_range      : integer;	
 	begin
 		if rising_edge(clock100ms) then
 			if Decode /= "10000" then
@@ -295,9 +295,7 @@ begin
 							divide_4   <= 0;
 							add_1      <= 0;
 							sub_1      		<= 0;					
-							
-							
-							
+														
 							
 							state           <= digit1;
 							
@@ -429,42 +427,50 @@ begin
 								case charSel4 is
 									when 10 =>
 										add_out <= save_number1 + save_number2;
-									
+										--display new chars
+										
+										
 									when 11 =>
 										sub_out <= save_number1 - save_number2;
+										--display new chars
 										
 									when 12 =>
 										multiply_2 <= save_number1 * 2;
+										--display new chars
+										
 										
 									when 13 =>
 										--convert to slv and shift 1 to the right
-										--divide_2 <= save_number / 2;
+										divide_2 <= save_number1 / 2;
+										
 										
 									when 14 =>
 										add_1 <= save_number1 + 1;
+										--display new chars
+										
 										
 									when 15 =>
 										sub_1 <= save_number1 - 1;
+										--display new chars
+										
 										
 									when 16 =>
 										multiply_4 <= save_number1 * 4;
+										--display new chars
+										
 										
 									when 17 =>
-										--convert to slv and shift 1 to the right
-										--divide_4 <= save_number1;
+										divide_4 <= save_number1 / 4;
+										--disp new chars
 										
 									when others => state <= input_final;
 								end case;
-								
 							end if;
-						
-							
 							
 						when others =>
 							state <= reset;
 					end case;
 				end if;
-			
 		end if;
 	end process;
 
@@ -475,7 +481,9 @@ begin
 
 	--LEDR <= std_logic_vector(to_unsigned(save_number2, 8)); --8 bits (display LED for debugging)
    --LEDR <= std_logic_vector(to_unsigned(add_out, 8));
-	LEDR <= std_logic_vector(to_unsigned(sub_out, 8));
+   --LEDR <= std_logic_vector(to_unsigned(divide_2, 8));
+   LEDR <= std_logic_vector(to_unsigned(divide_4, 8));
+
 
 	
 end Behavioral;
