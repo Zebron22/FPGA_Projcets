@@ -37,7 +37,7 @@ architecture Behavioral of top is
 			charY   : in STD_LOGIC_VECTOR(9 downto 0);
          red     : out STD_LOGIC_VECTOR(3 downto 0);
 			green   : out STD_LOGIC_VECTOR(3 downto 0);
-			charSel : in INTEGER range 0 to 17;         -- Character selection (for multiple characters)
+			charSel : in INTEGER range 0 to 19;         -- Character selection (for multiple characters)
          blue    : out STD_LOGIC_VECTOR(3 downto 0)
         );
     end component;
@@ -94,15 +94,31 @@ architecture Behavioral of top is
 	--16 pixels over
 	signal charX7  : std_logic_vector(9 downto 0);
 	
+	--16 pixels over
+	signal charX8  : std_logic_vector(9 downto 0);
+	signal charY8 : std_logic_vector(9 downto 0);
 	
-	signal charSel2: integer range 0 to 18 := 0; --selects character
-	signal charSel3: integer range 0 to 18 := 0; --selects character
-	signal charSel4: integer range 0 to 18 := 0; --selects character
-	signal charSel5: integer range 0 to 18 := 0; --selects character
-	signal charSel6: integer range 0 to 18 := 0; --selects character
-	signal charSel7: integer range 0 to 18 := 0; --selects character
+	
+	signal charX9, charX10, charX11  : std_logic_vector(9 downto 0);
+	signal charY9, charY10  : std_logic_vector(9 downto 0);
+	signal charSel9, charSel10, charSel11: integer range 0 to 18 := 0;
+	signal red9, green9, blue9: std_logic_vector(3 downto 0);
+	signal red10, green10, blue10: std_logic_vector(3 downto 0);
+	signal red11, green11, blue11: std_logic_vector(3 downto 0);	
+	
 
 
+	
+	signal charSel2: integer range 0 to 19 := 0; --selects character
+	signal charSel3: integer range 0 to 19 := 0; --selects character
+	signal charSel4: integer range 0 to 19 := 0; --selects character
+	signal charSel5: integer range 0 to 19 := 0; --selects character
+	signal charSel6: integer range 0 to 19 := 0; --selects character
+	signal charSel7: integer range 0 to 19 := 0; --selects character
+	signal charSel8: integer range 0 to 19 := 18; --selects character	
+	
+	
+	
 	signal red1, green1, blue1: std_logic_vector(3 downto 0);
 	signal red2, green2, blue2: std_logic_vector(3 downto 0);
 	signal red3, green3, blue3: std_logic_vector(3 downto 0);
@@ -110,6 +126,7 @@ architecture Behavioral of top is
 	signal red5, green5, blue5: std_logic_vector(3 downto 0);
 	signal red6, green6, blue6: std_logic_vector(3 downto 0);
 	signal red7, green7, blue7: std_logic_vector(3 downto 0);
+	signal red8, green8, blue8: std_logic_vector(3 downto 0);
 	
 	signal record_key : integer;	
 	signal save_number1 : integer;
@@ -124,6 +141,12 @@ architecture Behavioral of top is
 	signal add_1      : integer;
 	signal sub_1      : integer;
 	
+	signal disp : std_logic_vector(15 downto 0);
+	
+	signal disp_100 : integer;
+	signal disp_10 : integer;
+	signal disp_1 : integer;
+	signal remain : integer;
 	
 begin
 	
@@ -134,6 +157,21 @@ begin
 	charX6 <= std_logic_vector(unsigned(charX5) + to_unsigned(20, charX'length));
 	charX7 <= std_logic_vector(unsigned(charX6) + to_unsigned(20, charX'length));
 	
+	
+	charX8 <= std_logic_vector(unsigned(charX7) + to_unsigned(20, charX'length));
+	charY8 <= std_logic_vector(unsigned(charX7) + to_unsigned(24, charY'length));
+	
+	
+	charX9  <= std_logic_vector(unsigned(charX8) + to_unsigned(20, charX'length));
+	charY9  <= charY8; 
+	
+	charX10 <= std_logic_vector(unsigned(charX9) + to_unsigned(20, charX'length));
+	charY10 <= charY9; 
+	
+	charX11 <= std_logic_vector(unsigned(charX10) + to_unsigned(20, charX'length));
+	
+		
+	
 	DecodedValue     : Decoder port map (clk => MAX10_CLK1_50, Row => Row, Col => Col, DecodeOut => Decode);
 	VideoSyncInstance: VideoSyncGenerator port map (clock25MHz => clock25MHz, vsync => VGA_VS, hsync => VGA_HS, x => x, y => y);
 	PatternInstance  : tvPattern port map (x => x, y => y, charX => charX,   charY => charY,    red => red1, green => green1, blue => blue1, charSel => charSel);
@@ -143,16 +181,21 @@ begin
 	PatternInstance5 : tvPattern port map (x => x, y => y, charX => charX5,  charY => charY,  red => red5, green => green5, blue => blue5, charSel => charSel5); --shifted to the right
 	PatternInstance6 : tvPattern port map (x => x, y => y, charX => charX6,  charY => charY,  red => red6, green => green6, blue => blue6, charSel => charSel6); --shifted to the right
 	PatternInstance7 : tvPattern port map (x => x, y => y, charX => charX7,  charY => charY,  red => red7, green => green7, blue => blue7, charSel => charSel7); --shifted to the right
+	PatternInstance8 : tvPattern port map (x => x, y => y, charX => charX8,  charY => charY,  red => red8, green => green8, blue => blue8, charSel => charSel8); --shifted to the right
+	PatternInstance9 : tvPattern port map (x => x, y => y, charX => charX9, charY => charY, red => red9, green => green9, blue => blue9, charSel => charSel9);
+	PatternInstance10: tvPattern port map (x => x, y => y, charX => charX10, charY => charY, red => red10, green => green10, blue => blue10, charSel => charSel10);
+	PatternInstance11: tvPattern port map (x => x, y => y, charX => charX11, charY => charY, red => red11, green => green11, blue => blue11, charSel => charSel11);
 
 	
 	--controlling how the signal is displayed
-	process(x, y, red1, green1, blue1, red2, green2, blue2, red3, green3, blue3, red4, green4, blue4, red5, green5, blue5, red6, green6, blue6, red7, green7, blue7, charX2, charX3, charX4, charX5, charX6, charX7)
+	process(x, y, red1, green1, blue1, red2, green2, blue2, red3, green3, blue3, red4, green4, blue4, red5, green5, blue5, red6, green6, blue6, red7, green7, blue7, red8, green8, blue8, red9, green9, blue9, red10, green10, blue10, charX, charX2, charX3, charX4, charX5, charX6, charX7, charX8, charX9, charX10, charX11, charY9, charY10, charY8)
 	begin
 		 if unsigned(x) < unsigned(charX2) then
 			  -- Use output from the first pattern
 			  VGA_R <= red1;
 			  VGA_G <= green1;
 			  VGA_B <= blue1;
+		 
 		 elsif unsigned(x) < unsigned(charX3) then
 			  -- Use output from the second pattern
 			  VGA_R <= red2;
@@ -180,16 +223,43 @@ begin
 			-- Use output from the third pattern
 				VGA_R <= red6;
 				VGA_G <= green6;
-				VGA_B <= blue6;				
-				
-		 else
-			  -- Use output from the fourth pattern
-			  VGA_R <= red7;
-			  VGA_G <= green7;
-			  VGA_B <= blue7;
+				VGA_B <= blue6;		
+		
+			
+		elsif unsigned(x) < unsigned(charX8) then
+				VGA_R <= red7;
+				VGA_G <= green7;
+				VGA_B <= blue7;				
+		
+		
+		elsif unsigned(x) < unsigned(charX9) then
+			 VGA_R <= red8;
+			 VGA_G <= green8;
+			 VGA_B <= blue8;
+
+		elsif unsigned(x) < unsigned(charX10) then
+			 VGA_R <= red9;
+			 VGA_G <= green9;
+			 VGA_B <= blue9;
+
+		elsif unsigned(x) < unsigned(charX11) then
+			 VGA_R <= red10;
+			 VGA_G <= green10;
+			 VGA_B <= blue10;			 
+			 
+		else
+			 VGA_R <= red11;
+			 VGA_G <= green11;
+			 VGA_B <= blue11;
+			  
 		 end if;
 	end process;
 
+
+
+
+	
+	
 	-- Clock divider (50 MHz to 25 MHz)
 	process(MAX10_CLK1_50)
 	  variable divider : STD_LOGIC := '0';
@@ -229,7 +299,7 @@ begin
 	end process;
 
 	--decoder
-	process(Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, state, KEY)
+	process(Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, state, KEY)
 	begin
 	case Decode_stable is 
 		when "00000" =>  charSel_store <= 0;  -- 0
@@ -251,14 +321,14 @@ begin
 		when "10001" =>  charSel_store <= 16; -- special AC (multiply by 4)
 		when "10010" =>  charSel_store <= 17; -- special AD (divide by 4)
 		when "10000" =>  charSel_store <= 0;  -- Default case (0)
-		when others  =>  charSel_store <= 18; -- empty char for reset
+		when others  =>  charSel_store <= 19; -- empty char for reset
 	end case;
 	end process;
 
 	
 	
 	--displays the characters
-	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, KEY)
+	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY)
 	variable verify_record_key: integer;
 	variable valid_range      : integer;	
 	begin
@@ -282,20 +352,27 @@ begin
 							charSel5 <= 0;
 							charSel6 <= 0;
 							charSel7 <= 0;
+							charSel9 <= 0;
+							charSel10 <= 0;
+							charSel11 <= 0;
 							record_key   <= 0;
 							save_number1 <= 0;
 							save_number2 <= 0;
 							add_out <= 0;
 							verify_record_key := 0;
-							add_out   <= 0;
-							sub_out <= 0;
-							multiply_2 <= 0;
-							divide_2   <= 0;
-							multiply_4<= 0;
-							divide_4   <= 0;
-							add_1      <= 0;
-							sub_1      		<= 0;					
-														
+							add_out        <= 0;
+							sub_out        <= 0;
+							multiply_2     <= 0;
+							divide_2       <= 0;
+							multiply_4     <= 0;
+							divide_4       <= 0;
+							add_1          <= 0;
+							sub_1      		<= 0;
+							
+							disp_1   <= 0;
+							disp_10  <= 0;
+							disp_100 <= 0;
+							
 							
 							state           <= digit1;
 							
@@ -344,37 +421,37 @@ begin
 								
 								case Decode_stable is
 									when "01010" => --add
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										Decode_prev <= Decode_stable;
 										state <= digit4;
 									
 									when "01011" => --subtract
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										Decode_prev <= Decode_stable;
 										state <= digit4;
 										
 									when "01100" => --multiply by 2
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										state <= input_final;
 										
 									when "01101" => --divide by 2
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										state <= input_final;
 										
 									when "01110" => --add1
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										state <= input_final;
 										
 									when "01111" => --subtract1
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										state <= input_final;
 										
 									when "10001" => --multiply4
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										state <= input_final;
 										
 									when "10010" => --divide4
-										CharSel4 <= CharSel_store;
+										charSel4 <= CharSel_store;
 										state <= input_final;
 										
 									
@@ -428,20 +505,59 @@ begin
 									when 10 =>
 										add_out <= save_number1 + save_number2;
 										--display new chars
+										disp <= std_logic_vector(to_unsigned(add_out, 16)); --disp is a 16-bit slv
+										
+										disp_1   <= add_out mod 10; -- Last digit
+										remain   <= add_out / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
+										
 										
 										
 									when 11 =>
 										sub_out <= save_number1 - save_number2;
 										--display new chars
 										
+										disp_1   <= sub_out mod 10; -- Last digit
+										remain   <= sub_out / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
+										
+										
+										
 									when 12 =>
 										multiply_2 <= save_number1 * 2;
 										--display new chars
 										
+										disp_1   <= multiply_2 mod 10; -- Last digit
+										remain   <= multiply_2 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;										
 										
 									when 13 =>
 										--convert to slv and shift 1 to the right
 										divide_2 <= save_number1 / 2;
+
+										disp_1   <= divide_2 mod 10; -- Last digit
+										remain   <= divide_2 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;	
 										
 										
 									when 14 =>
@@ -471,10 +587,13 @@ begin
 							state <= reset;
 					end case;
 				end if;
+				
+				
+				
+				
 		end if;
 	end process;
-
-
+	
 
 	--LEDR <= std_logic_vector(to_unsigned(record_key, 8)); --8 bits (display LED for debugging)
 	--LEDR <= std_logic_vector(to_unsigned(save_number1, 8)); --8 bits (display LED for debugging)
