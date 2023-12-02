@@ -8,7 +8,7 @@ entity tvPattern is
         y       : in STD_LOGIC_VECTOR(9 downto 0);
         charX   : in STD_LOGIC_VECTOR(9 downto 0); -- X position of the character
         charY   : in STD_LOGIC_VECTOR(9 downto 0); -- Y position of the character
-        charSel : in INTEGER range 0 to 17;         -- Character selection (for multiple characters)
+        charSel : in INTEGER range 0 to 18;         -- Character selection (for multiple characters)
         red     : out STD_LOGIC_VECTOR(3 downto 0);
         green   : out STD_LOGIC_VECTOR(3 downto 0);
         blue    : out STD_LOGIC_VECTOR(3 downto 0)
@@ -364,7 +364,23 @@ constant divide_by_4: char_pattern_type := (
   15 => "0000000000000000");
 
 
-
+constant equals: char_pattern_type := (
+0  => "0000000000000000",
+1  => "0000000000000000",
+2  => "0000000000000000",
+3  => "0000000000000000",
+4  => "0001111111111000",
+5  => "0001111111111000",
+6  => "0000000000000000",
+7  => "0000000000000000",
+8  => "0000000000000000",
+9  => "0000000000000000",
+10 => "0001111111111000",
+11 => "0001111111111000",
+12 => "0000000000000000",
+13 => "0000000000000000",
+14 => "0000000000000000",
+15 => "0000000000000000");
 
 
 
@@ -592,6 +608,17 @@ begin
                         green <= (others => '0');
                         blue  <= (others => '0');
                     end if;
+						  
+					 when 18 => 
+						  if equals(row)(col) = '1' then
+                        red   <= "1111";
+                        green <= "1111";
+                        blue  <= "1111";
+                    else
+                        red   <= (others => '0');
+                        green <= (others => '0');
+                        blue  <= (others => '0');
+                    end if;						
 
 
 						  
