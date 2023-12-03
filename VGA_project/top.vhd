@@ -148,6 +148,8 @@ architecture Behavioral of top is
 	signal disp_1 : integer;
 	signal remain : integer;
 	
+	signal button_released : std_logic;
+	
 begin
 	
 	charX2 <= std_logic_vector(unsigned(charX)  + to_unsigned(20, charX'length));
@@ -188,7 +190,7 @@ begin
 
 	
 	--controlling how the signal is displayed
-	process(x, y, red1, green1, blue1, red2, green2, blue2, red3, green3, blue3, red4, green4, blue4, red5, green5, blue5, red6, green6, blue6, red7, green7, blue7, red8, green8, blue8, red9, green9, blue9, red10, green10, blue10, charX, charX2, charX3, charX4, charX5, charX6, charX7, charX8, charX9, charX10, charX11, charY9, charY10, charY8)
+	process(x, y, red1, green1, blue1, red2, green2, blue2, red3, green3, blue3, red4, green4, blue4, red5, green5, blue5, red6, green6, blue6, red7, green7, blue7, red8, green8, blue8, red9, green9, blue9, red10, green10, blue10, red11, green11, blue11, charX, charX2, charX3, charX4, charX5, charX6, charX7, charX8, charX9, charX10, charX11, charY9, charY10, charY8)
 	begin
 		 if unsigned(x) < unsigned(charX2) then
 			  -- Use output from the first pattern
@@ -328,11 +330,317 @@ begin
 	
 	
 	--displays the characters
+--	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY)
+--	variable verify_record_key: integer;
+--	variable valid_range      : integer;	
+--	begin
+--		if rising_edge(clock100ms) then
+--			--Decode turns back to 10000 when not pressed
+--			--Decode(4) is 0 when pressed
+--			--create a method that moves to the next state when Decode(4) is 0
+--			if Decode /= "10000" then
+--				Decode_stable <= Decode;
+--			end if;
+--				
+--				--FSM for calculations
+--				if KEY = "10" then
+--					state <= reset;
+--				else
+--					case state is
+--						when reset =>
+--							Decode_stable <= "10000";
+--							Decode_prev   <= "10000";
+--							charSel  <= 0;
+--							charSel2 <= 0;
+--							charSel3 <= 0;
+--							charSel4 <= 0;
+--							charSel5 <= 0;
+--							charSel6 <= 0;
+--							charSel7 <= 0;
+--							charSel9 <= 0;
+--							charSel10 <= 0;
+--							charSel11 <= 0;
+--							record_key   <= 0;
+--							save_number1 <= 0;
+--							save_number2 <= 0;
+--							add_out <= 0;
+--							verify_record_key := 0;
+--							add_out        <= 0;
+--							sub_out        <= 0;
+--							multiply_2     <= 0;
+--							divide_2       <= 0;
+--							multiply_4     <= 0;
+--							divide_4       <= 0;
+--							add_1          <= 0;
+--							sub_1      		<= 0;
+--							
+--							disp_1   <= 0;
+--							disp_10  <= 0;
+--							disp_100 <= 0;
+--							
+--							
+--							state           <= digit1;
+--							
+--
+--
+--						when digit1 =>
+--							--enter first digit
+--							if Decode_stable /= Decode_prev and Decode(4) = '0' then
+--								
+--								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
+--								Decode_prev <= Decode_stable;
+--								charSel <= CharSel_store;
+--								state <= digit2;
+--							end if;
+--
+--						when digit2 =>
+--							if Decode_stable /= Decode_prev then
+--								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+--								 Decode_prev <= Decode_stable;
+--								 charSel2 <= CharSel_store;
+--								 state <= digit3;
+--							end if;
+--				
+--							
+--						when digit3 =>
+--							if Decode_stable /= Decode_prev then
+--								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+--								--check if greater than 255
+--								if verify_record_key > 255 then
+--									--print on LCD screen "not allowed"
+--									
+--									state <= reset;
+--								else
+--									--record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+--									record_key <= verify_record_key;
+--									Decode_prev <= Decode_stable;
+--									charSel3 <= CharSel_store;
+--									state <= op;								
+--								end if;
+--							end if;
+--							
+--							
+--						when op =>
+--							save_number1 <= record_key; --saves the first number
+--							-- Select the operation to use
+--							if Decode_stable /= Decode_prev then
+--								
+--								case Decode_stable is
+--									when "01010" => --add
+--										charSel4 <= CharSel_store;
+--										Decode_prev <= Decode_stable;
+--										state <= digit4;
+--									
+--									when "01011" => --subtract
+--										charSel4 <= CharSel_store;
+--										Decode_prev <= Decode_stable;
+--										state <= digit4;
+--										
+--									when "01100" => --multiply by 2
+--										charSel4 <= CharSel_store;
+--										state <= input_final;
+--										
+--									when "01101" => --divide by 2
+--										charSel4 <= CharSel_store;
+--										state <= input_final;
+--										
+--									when "01110" => --add1
+--										charSel4 <= CharSel_store;
+--										state <= input_final;
+--										
+--									when "01111" => --subtract1
+--										charSel4 <= CharSel_store;
+--										state <= input_final;
+--										
+--									when "10001" => --multiply4
+--										charSel4 <= CharSel_store;
+--										state <= input_final;
+--										
+--									when "10010" => --divide4
+--										charSel4 <= CharSel_store;
+--										state <= input_final;
+--										
+--									
+--									when others => Decode_stable <= "10000";
+--								end case;
+--							
+--							end if;
+--	
+--
+--						when digit4 =>
+--							--enter first digit
+--							if Decode_stable /= Decode_prev then
+--								
+--								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
+--								Decode_prev <= Decode_stable;
+--								charSel5 <= CharSel_store;
+--								state <= digit5;
+--							end if;
+--
+--						when digit5 =>
+--							if Decode_stable /= Decode_prev then
+--								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+--								 Decode_prev <= Decode_stable;
+--								 charSel6 <= CharSel_store;
+--								 state <= digit6;
+--							end if;
+--				
+--							
+--						when digit6 =>
+--							if Decode_stable /= Decode_prev then
+--								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+--								--check if greater than 255
+--								if verify_record_key > 255 then
+--									--print on LCD screen "not allowed"
+--									
+--									state <= reset;
+--								else
+--									--record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
+--									record_key <= verify_record_key;
+--									Decode_prev <= Decode_stable;
+--									charSel7 <= CharSel_store;
+--									state <= input_final;								
+--								end if;
+--							end if;
+--	
+--						when input_final =>
+--							save_number2 <= record_key;
+--							if KEY = "01" then
+--								
+--								case charSel4 is
+--									when 10 =>
+--										add_out <= save_number1 + save_number2;
+--										--display new chars
+--										disp <= std_logic_vector(to_unsigned(add_out, 16)); --disp is a 16-bit slv
+--										
+--										disp_1   <= add_out mod 10; -- Last digit
+--										remain   <= add_out / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;
+--										
+--										
+--										
+--									when 11 =>
+--										sub_out <= save_number1 - save_number2;
+--										--display new chars
+--										
+--										disp_1   <= sub_out mod 10; -- Last digit
+--										remain   <= sub_out / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;
+--										
+--										
+--										
+--									when 12 =>
+--										multiply_2 <= save_number1 * 2;
+--										--display new chars
+--										
+--										disp_1   <= multiply_2 mod 10; -- Last digit
+--										remain   <= multiply_2 / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;										
+--										
+--									when 13 =>
+--										divide_2 <= save_number1 / 2;
+--
+--										disp_1   <= divide_2 mod 10; -- Last digit
+--										remain   <= divide_2 / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;	
+--										
+--										
+--									when 14 =>
+--										add_1 <= save_number1 + 1;
+--										--display new chars
+--										
+--										disp_1   <= add_1 mod 10; -- Last digit
+--										remain   <= add_1 / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;
+--										
+--										
+--										
+--									when 15 =>
+--										sub_1 <= save_number1 - 1;
+--										--display new chars
+--										disp_1   <= sub_1 mod 10; -- Last digit
+--										remain   <= sub_1 / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;
+--										
+--										
+--									when 16 =>
+--										multiply_4 <= save_number1 * 4;
+--										--display new chars
+--										disp_1   <= multiply_4 mod 10; -- Last digit
+--										remain   <= multiply_4 / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;										
+--										
+--									when 17 =>
+--										divide_4 <= save_number1 / 4;
+--										--disp new chars
+--										disp_1   <= divide_4 mod 10; -- Last digit
+--										remain   <= divide_4 / 10;   -- Remaining number
+--										disp_10  <= remain mod 10;
+--										disp_100 <= remain / 10;
+--										
+--										charSel9  <= disp_100;
+--										charSel10 <= disp_10;
+--										charSel11 <= disp_1;											
+--										
+--										
+--									when others => state <= input_final;
+--								end case;
+--							end if;
+--							
+--						when others =>
+--							state <= reset;
+--					end case;
+--				end if;
+--				
+--				
+--				
+--				
+--		end if;
+--	end process;
+
 	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY)
 	variable verify_record_key: integer;
 	variable valid_range      : integer;	
 	begin
 		if rising_edge(clock100ms) then
+			--Decode turns back to 10000 when not pressed
+			--Decode(4) is 0 when pressed
+			--create a method that moves to the next state when Decode(4) is 0
 			if Decode /= "10000" then
 				Decode_stable <= Decode;
 			end if;
@@ -377,10 +685,10 @@ begin
 							state           <= digit1;
 							
 
+
 						when digit1 =>
 							--enter first digit
-							if Decode_stable /= Decode_prev then
-								
+							if Decode_stable /= Decode_prev and Decode(4) = '0' then
 								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
 								Decode_prev <= Decode_stable;
 								charSel <= CharSel_store;
@@ -388,7 +696,8 @@ begin
 							end if;
 
 						when digit2 =>
-							if Decode_stable /= Decode_prev then
+							Decode_prev <= "10000";
+							if Decode_stable /= Decode_prev and Decode(4) = '0' then
 								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
 								 Decode_prev <= Decode_stable;
 								 charSel2 <= CharSel_store;
@@ -397,7 +706,8 @@ begin
 				
 							
 						when digit3 =>
-							if Decode_stable /= Decode_prev then
+							Decode_prev <= "10000";
+							if Decode_stable /= Decode_prev and Decode(4) = '0' then
 								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
 								--check if greater than 255
 								if verify_record_key > 255 then
@@ -472,7 +782,8 @@ begin
 							end if;
 
 						when digit5 =>
-							if Decode_stable /= Decode_prev then
+							Decode_prev <= "10000";
+							if Decode_stable /= Decode_prev and Decode(4) = '0' then
 								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
 								 Decode_prev <= Decode_stable;
 								 charSel6 <= CharSel_store;
@@ -481,6 +792,7 @@ begin
 				
 							
 						when digit6 =>
+							
 							if Decode_stable /= Decode_prev then
 								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
 								--check if greater than 255
@@ -547,7 +859,6 @@ begin
 										charSel11 <= disp_1;										
 										
 									when 13 =>
-										--convert to slv and shift 1 to the right
 										divide_2 <= save_number1 / 2;
 
 										disp_1   <= divide_2 mod 10; -- Last digit
@@ -564,20 +875,54 @@ begin
 										add_1 <= save_number1 + 1;
 										--display new chars
 										
+										disp_1   <= add_1 mod 10; -- Last digit
+										remain   <= add_1 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
+										
+										
 										
 									when 15 =>
 										sub_1 <= save_number1 - 1;
 										--display new chars
+										disp_1   <= sub_1 mod 10; -- Last digit
+										remain   <= sub_1 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
 										
 										
 									when 16 =>
 										multiply_4 <= save_number1 * 4;
 										--display new chars
+										disp_1   <= multiply_4 mod 10; -- Last digit
+										remain   <= multiply_4 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
 										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;										
 										
 									when 17 =>
 										divide_4 <= save_number1 / 4;
 										--disp new chars
+										disp_1   <= divide_4 mod 10; -- Last digit
+										remain   <= divide_4 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;											
+										
 										
 									when others => state <= input_final;
 								end case;
@@ -587,12 +932,12 @@ begin
 							state <= reset;
 					end case;
 				end if;
-				
-				
-				
-				
+
 		end if;
 	end process;
+
+
+
 	
 
 	--LEDR <= std_logic_vector(to_unsigned(record_key, 8)); --8 bits (display LED for debugging)
