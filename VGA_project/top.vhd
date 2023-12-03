@@ -1,3 +1,4 @@
+--Cebron Williams
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.ALL;
@@ -327,7 +328,7 @@ begin
 	end case;
 	end process;
 
-	
+--Test process
 	
 	--displays the characters
 --	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY)
@@ -626,13 +627,11 @@ begin
 --							state <= reset;
 --					end case;
 --				end if;
---				
---				
---				
---				
 --		end if;
 --	end process;
 
+
+	--above will reset if above 255
 	process(clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY)
 	variable verify_record_key: integer;
 	variable valid_range      : integer;	
@@ -792,8 +791,8 @@ begin
 				
 							
 						when digit6 =>
-							
-							if Decode_stable /= Decode_prev then
+							Decode_prev <= "10000";
+							if Decode_stable /= Decode_prev and Decode(4) = '0' then
 								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
 								--check if greater than 255
 								if verify_record_key > 255 then
