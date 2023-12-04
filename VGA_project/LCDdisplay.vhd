@@ -38,7 +38,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity LCDdisplay is
 		Port ( DB : out std_logic_vector(7 downto 4); -- RUn the (3 downto 0 ) section first to assign fitter locations
-					--DB : out std_logic_vector(3 downto 0);
+				 --DB : out std_logic_vector(3 downto 0);
 				 RS : out std_logic;
 				 RW : out std_logic;
 				 EN : out std_logic;
@@ -91,7 +91,7 @@ type write_state is ( Idle,
 							 );
 signal current_write_state : write_state:= Idle;							--Initial write state
 --type LCD_CMDS_T is array(integer range <>) of std_logic_vector(5 downto 0);
-type LCD_CMDS_T is array(0 to 54) of std_logic_vector(5 downto 0);
+type LCD_CMDS_T is array(0 to 60) of std_logic_vector(5 downto 0);
 --Array of all commands required for the LCD display
 constant LCD_CMDS : LCD_CMDS_T := ( 0 => "00"&X"0", --PowerOn
 												1 => "00"&X"3", --Four Bit Op1
@@ -108,46 +108,76 @@ constant LCD_CMDS : LCD_CMDS_T := ( 0 => "00"&X"0", --PowerOn
 											  12 => "00"&X"2", --ReturnHome
 											  13 => "00"&X"9",
 											  14 => "00"&X"0", --Go to Address 0x10
+											  
 											  15 => "10"&X"4",
-											  16 => "10"&X"8", --"H"
+											  16 => "10"&X"5", --"E"
+											  
 											  17 => "10"&X"6",
-											  18 => "10"&X"5", --"e"
-											  19 => "10"&X"6",
-											  20 => "10"&X"C", --"l"
+											  18 => "10"&X"E", --"n"
+											  
+											  19 => "10"&X"7",
+											  20 => "10"&X"4", --"t"
+											  
 											  21 => "10"&X"6",
-											  22 => "10"&X"C", --"l"
-											  23 => "10"&X"6",
-											  24 => "10"&X"F", --"o"
+											  22 => "10"&X"5", --"e"
+											  
+											  23 => "10"&X"7",
+											  24 => "10"&X"2", --"r"
+											  
 											  25 => "10"&X"F",
 											  26 => "10"&X"E", --space
+											  
 											  27 => "10"&X"6",
-											  28 => "10"&X"6", --"f"
-											  29 => "10"&X"7",
-											  30 => "10"&X"2", --"r"
+											  28 => "10"&X"4", --"d"
+											  
+											  29 => "10"&X"6",
+											  30 => "10"&X"9", --"i"
+											  
 											  31 => "10"&X"6",
-											  32 => "10"&X"F", --"o"
+											  32 => "10"&X"7", --"g"
+											  
 											  33 => "10"&X"6",
-											  34 => "10"&X"D", --"m"
-											  35 => "00"&X"D",
-											  36 => "00"&X"1", --Go to Address 0x50
-											  37 => "10"&X"4",
-											  38 => "10"&X"4", --"D"
-											  39 => "10"&X"7",
-											  40 => "10"&X"2", --"r"
-											  41 => "10"&X"2",
-											  42 => "10"&X"E", --"."
-											  43 => "10"&X"F",
-											  44 => "10"&X"E", --space
-											  45 => "10"&X"4",
-											  46 => "10"&X"4", --"D"
-											  47 => "10"&X"6",
-											  48 => "10"&X"F", --"o"
-											  49 => "10"&X"7",
-											  50 => "10"&X"3", --"s"
-											  51 => "10"&X"7",
-											  52 => "10"&X"3", --"s"
-											  53 => "00"&X"1",
-											  54 => "00"&X"8" --Shift Left
+											  34 => "10"&X"9", --"i"
+											  
+											  35 => "10"&X"7",
+											  36 => "10"&X"4", --"t"
+											  
+											  37 => "10"&X"7",
+											  38 => "10"&X"3", --"s"
+											  
+											  39 => "00"&X"D",
+											  40 => "00"&X"1", --Go to Address 0x50
+											  
+											  41 => "10"&X"4",
+											  42 => "10"&X"8", --"H"
+											  
+											  43 => "10"&X"6",
+											  44 => "10"&X"F", --"o"
+											  
+											  
+											  45 => "10"&X"6", 
+											  46 => "10"&X"C", --"l"
+											  
+											  47 => "10"&X"6", 
+											  48 => "10"&X"4", --"d"
+											  
+											  49 => "10"&X"2", 
+											  50 => "10"&X"0", --"space"
+											  
+											  51 => "10"&X"4", 
+											  52 => "10"&X"B", --"K"
+											  
+											  53 => "10"&X"4", 
+											  54 => "10"&X"5", --"E"
+											  
+											  55 => "10"&X"5", 
+											  56 => "10"&X"9", --"Y"
+											  
+											  57 => "10"&X"3", 
+											  58 => "10"&X"1", --"1"
+											  
+											  59 => "00"&X"1",
+											  60 => "00"&X"8" --Shift Left
 											  );
 											  
 signal lcd_cmd_ptr : integer range 0 to LCD_CMDS'HIGH + 1 := 0;--Current pointer to the LCD_CMDS array
@@ -199,7 +229,7 @@ begin
 		elsif current_state = PowerOn then
 			lcd_cmd_ptr <= 0;
 		elsif current_state = ShiftIn or current_state = ShiftOut then
-			lcd_cmd_ptr <= 53;
+			lcd_cmd_ptr <= 59;                                                              --originally 53   (54-1)                                   
 		elsif current_state = DisplayClear then
 			lcd_cmd_ptr <= 9;
 		else
@@ -382,7 +412,8 @@ begin
 		DB <= LCD_CMDS(lcd_cmd_ptr)(3 downto 0);
 		activateW <= '0';
 		if delayOK = '1' then
-			if lcd_cmd_ptr > 51 then		--Check if last character has been written
+		
+			if lcd_cmd_ptr > 57 then		--Check if last character has been written                            (originally 51 (54-3))
 				current_state <= ShiftIn;
 			else
 				current_state <= CharWrite;
