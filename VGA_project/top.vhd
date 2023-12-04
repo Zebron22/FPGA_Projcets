@@ -1,3 +1,5 @@
+--Cebron Williams
+--update 12/04/2023: added support for multiple same inputs
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.ALL;
@@ -63,7 +65,10 @@ architecture Behavioral of top is
 			RS : out std_logic;
 			RW : out std_logic;
 			EN : out std_logic;
-			MAX10_CLK1_50 : in std_logic
+			MAX10_CLK1_50 : in std_logic;
+			
+			LEDR : out std_logic_vector(7 downto 0);
+			state_set : in std_logic
 		);
 	end component;
 	
@@ -77,7 +82,8 @@ architecture Behavioral of top is
 	type   state_type is (reset, digit1, digit2, digit3, op, digit4, digit5, digit6, input_final);
 	signal state : state_type := reset; --used as a FSM for keypad inputs
 	
-	
+	type HEXstate_type is (HEXreset, HEXdigit1, HEXdigit2, HEXdigit3, op, HEXdigit4,HEXdigit5, HEXdigit6, HEXinput_final);
+	signal HEXstate : HEXstate_type  := HEXreset; --Created an option for HEX inputs
 	
 	
 	signal charSel_store : integer := 0; --used to hold the state of charSel
@@ -164,6 +170,9 @@ architecture Behavioral of top is
 	signal clkCount : std_logic_vector(6 downto 0):= "0000000";								--MAX10_CLK1_50 divider count
 	signal oneUSClk : std_logic;																		--1 micro second clock signal
 	
+	
+	signal state_set : std_logic := '0';
+	
 begin
 	
 	charX2 <= std_logic_vector(unsigned(charX)  + to_unsigned(20, charX'length));
@@ -202,7 +211,7 @@ begin
 	PatternInstance10: tvPattern port map (x => x, y => y, charX => charX10, charY => charY, red => red10, green => green10, blue => blue10, charSel => charSel10);
 	PatternInstance11: tvPattern port map (x => x, y => y, charX => charX11, charY => charY, red => red11, green => green11, blue => blue11, charSel => charSel11);
 
-	LCDdisplayInstance: LCDdisplay port map (DB => DB, RS => RS, RW => RW, EN => EN, MAX10_CLK1_50 => MAX10_CLK1_50);
+	LCDdisplayInstance: LCDdisplay port map (DB => DB, RS => RS, RW => RW, EN => EN, MAX10_CLK1_50 => MAX10_CLK1_50, state_set => state_set);
 	
 	
 	
@@ -353,7 +362,7 @@ begin
 
 	
 	
-	--Main FSM that displays the characters
+	--Main FSM that displays the characters (decimal)
 	process(oneUSClk, clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY)
 	variable verify_record_key: integer;
 	variable valid_range      : integer;	
@@ -404,18 +413,23 @@ begin
 						when digit1 =>
 							--enter first digit
 							if Decode_stable /= Decode_prev then
-								
 								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
 								Decode_prev <= Decode_stable;
-								charSel <= CharSel_store;
+								charSel <= CharSel_store;								
+								Decode_stable <= "10000"; --set to unpressed
+								Decode_prev <= "10000"; --set to unpressed
 								state <= digit2;
-							end if;
+							end if;							
+							
+							
 
 						when digit2 =>
 							if Decode_stable /= Decode_prev then
 								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
 								 Decode_prev <= Decode_stable;
 								 charSel2 <= CharSel_store;
+								 Decode_stable <= "10000"; --set to unpressed
+								 Decode_prev <= "10000"; --set to unpressed
 								 state <= digit3;
 							end if;
 				
@@ -433,6 +447,8 @@ begin
 									record_key <= verify_record_key;
 									Decode_prev <= Decode_stable;
 									charSel3 <= CharSel_store;
+									Decode_stable <= "10000"; --set to unpressed
+								   Decode_prev <= "10000"; --set to unpressed
 									state <= op;								
 								end if;
 							end if;
@@ -492,6 +508,8 @@ begin
 								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
 								Decode_prev <= Decode_stable;
 								charSel5 <= CharSel_store;
+								Decode_stable <= "10000"; --set to unpressed
+								Decode_prev <= "10000"; --set to unpressed
 								state <= digit5;
 							end if;
 
@@ -500,6 +518,8 @@ begin
 								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
 								 Decode_prev <= Decode_stable;
 								 charSel6 <= CharSel_store;
+								 Decode_stable <= "10000"; --set to unpressed
+								 Decode_prev <= "10000"; --set to unpressed
 								 state <= digit6;
 							end if;
 				
@@ -517,6 +537,8 @@ begin
 									record_key <= verify_record_key;
 									Decode_prev <= Decode_stable;
 									charSel7 <= CharSel_store;
+									Decode_stable <= "10000"; --set to unpressed
+								   Decode_prev <= "10000"; --set to unpressed
 									state <= input_final;								
 								end if;
 							end if;
@@ -588,21 +610,58 @@ begin
 									when 14 =>
 										add_1 <= save_number1 + 1;
 										--display new chars
+										disp_1   <= add_1 mod 10; -- Last digit
+										remain   <= add_1 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
+										
 										
 										
 									when 15 =>
 										sub_1 <= save_number1 - 1;
 										--display new chars
 										
+										disp_1   <= sub_1 mod 10; -- Last digit
+										remain   <= sub_1 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
+										
 										
 									when 16 =>
 										multiply_4 <= save_number1 * 4;
 										--display new chars
 										
+										disp_1   <= multiply_4 mod 10; -- Last digit
+										remain   <= multiply_4 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
+										
 										
 									when 17 =>
 										divide_4 <= save_number1 / 4;
 										--disp new chars
+										
+										disp_1   <= divide_4 mod 10; -- Last digit
+										remain   <= divide_4 / 10;   -- Remaining number
+										disp_10  <= remain mod 10;
+										disp_100 <= remain / 10;
+										
+										charSel9  <= disp_100;
+										charSel10 <= disp_10;
+										charSel11 <= disp_1;
+										
 										
 									when others => state <= input_final;
 								end case;
@@ -626,7 +685,7 @@ begin
 	--LEDR <= std_logic_vector(to_unsigned(save_number2, 8)); --8 bits (display LED for debugging)
    --LEDR <= std_logic_vector(to_unsigned(add_out, 8));
    --LEDR <= std_logic_vector(to_unsigned(divide_2, 8));
-   LEDR <= std_logic_vector(to_unsigned(divide_4, 8));
+   --LEDR <= std_logic_vector(to_unsigned(divide_4, 8));
 
 
 	

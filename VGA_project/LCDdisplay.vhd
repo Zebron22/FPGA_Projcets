@@ -22,7 +22,11 @@
 ------------------------------------------------------------------------
 -- Revision History:
 --	 02/05/2007(JacobB): created
---  12/02/2023(Cebron Williams): Make compatible with DE-10 Lite
+--  12/02/2023(Cebron Williams): 
+--  * Made compatible with the DE-10 Lite by
+--    Modifying the clk frequencies and the delays.
+--  * Replaced LCD_CMDS integer range from <> to
+--    a constant numeber, as Quartus prime lite does not support this function.
 ------------------------------------------------------------------------
 
 
@@ -42,7 +46,11 @@ entity LCDdisplay is
 				 RS : out std_logic;
 				 RW : out std_logic;
 				 EN : out std_logic;
-				 MAX10_CLK1_50 : in std_logic);
+				 MAX10_CLK1_50 : in std_logic;
+				 
+				 LEDR : out std_logic_vector(7 downto 0);
+				 state_set : in std_logic --flag from the top vhdl file that calls the clear display state?
+				 );
 end LCDdisplay;
 
 architecture Behavioral of LCDdisplay is
@@ -55,6 +63,12 @@ signal write_delay_ok : std_logic:= '0';														--1 when delay write time 
 signal oneUSClk : std_logic;																		--1 micro second clock signal
 signal activateW : std_logic:= '0';																--Signal that starts the write machine
 signal ShiftCount : std_logic_vector(3 downto 0):= "0000";								--Delay count for shifting
+
+
+
+
+
+
 -- Main state machine
 type main_state is ( PowerOn,
 							FourBitOp1,
@@ -154,7 +168,6 @@ constant LCD_CMDS : LCD_CMDS_T := ( 0 => "00"&X"0", --PowerOn
 											  43 => "10"&X"6",
 											  44 => "10"&X"F", --"o"
 											  
-											  
 											  45 => "10"&X"6", 
 											  46 => "10"&X"C", --"l"
 											  
@@ -183,6 +196,24 @@ constant LCD_CMDS : LCD_CMDS_T := ( 0 => "00"&X"0", --PowerOn
 signal lcd_cmd_ptr : integer range 0 to LCD_CMDS'HIGH + 1 := 0;--Current pointer to the LCD_CMDS array
 
 begin
+
+
+
+--test to read from state_set
+process (MAX10_CLK1_50, state_set) begin
+	
+	if state_set = '1' then
+		LEDR <= "11111111";
+	else
+		LEDR <= "00000000";
+	end if;
+
+end process;
+
+
+
+
+
 --This process produces a 1 micro-second clock
 process (MAX10_CLK1_50, oneUSClk)
 begin
@@ -368,15 +399,17 @@ begin
 		else
 			current_state <= DisplaySet_Delay;
 		end if;
+		
+		
+		
+		
+		
 	when DisplayClear =>		--Issue Display Clear command to the LCD display
 		RS <= LCD_CMDS(lcd_cmd_ptr)(5);
 		RW <= LCD_CMDS(lcd_cmd_ptr)(4);
 		DB <= LCD_CMDS(lcd_cmd_ptr)(3 downto 0);
 		activateW <= '1';	
 		current_state <= DisplayClear_Delay;
-		
-
-		
 		
 		
 	when DisplayClear_Delay =>		--Hold time for Display Clear
