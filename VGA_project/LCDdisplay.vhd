@@ -374,6 +374,11 @@ begin
 		DB <= LCD_CMDS(lcd_cmd_ptr)(3 downto 0);
 		activateW <= '1';	
 		current_state <= DisplayClear_Delay;
+		
+
+		
+		
+		
 	when DisplayClear_Delay =>		--Hold time for Display Clear
 		RS <= LCD_CMDS(lcd_cmd_ptr)(5);
 		RW <= LCD_CMDS(lcd_cmd_ptr)(4);
@@ -400,12 +405,16 @@ begin
 		else
 			current_state <= ReturnHome_Delay;
 		end if;
+		
+		
 	when CharWrite =>		--Issue the Write command to the LCD display
 		RS <= LCD_CMDS(lcd_cmd_ptr)(5);
 		RW <= LCD_CMDS(lcd_cmd_ptr)(4);
 		DB <= LCD_CMDS(lcd_cmd_ptr)(3 downto 0);
 		activateW <= '1';
 		current_state <= Char_Delay;
+		
+		
 	when Char_Delay =>		--Hold time for write
 		RS <= LCD_CMDS(lcd_cmd_ptr)(5);
 		RW <= LCD_CMDS(lcd_cmd_ptr)(4);
@@ -421,6 +430,8 @@ begin
 		else
 			current_state <= Char_Delay;
 		end if;
+		
+		
 	when ShiftIn =>		--Issue the Shift left command to the LCD display
 		RS <= LCD_CMDS(lcd_cmd_ptr)(5);
 		RW <= LCD_CMDS(lcd_cmd_ptr)(4);
