@@ -37,7 +37,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --use UNISIM.VComponents.all;
 
 entity LCDdisplay is
-		Port ( DB : out std_logic_vector(7 downto 4); --DB : out std_logic_vector(3 downto 0);
+		Port ( DB : out std_logic_vector(7 downto 4); -- RUn the (3 downto 0 ) section first to assign fitter locations
+					--DB : out std_logic_vector(3 downto 0);
 				 RS : out std_logic;
 				 RW : out std_logic;
 				 EN : out std_logic;
@@ -502,4 +503,3 @@ begin
 		end process;	
 
 end Behavioral;
-
