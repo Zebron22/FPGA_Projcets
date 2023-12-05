@@ -1,5 +1,6 @@
 --Cebron Williams
 --update 12/04/2023: added support for multiple same inputs
+--added HEX functionality - the user enters a HEX value. As the user enters a HEX value, the display updates with the decimal equivalent
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.ALL;
@@ -7,7 +8,7 @@ use IEEE.numeric_std.ALL;
 entity top_HEX is
     Port (
 		  SW            : in std_logic_vector(1 downto 0);
-		  LEDR          : out std_logic_vector(7 downto 0); --debug signal
+		  LEDR          : out std_logic_vector(9 downto 0); --debug signal
 		  Row           : in  std_logic_vector(3 downto 0);
 		  Col           : out std_logic_vector(3 downto 0); --out
 		  KEY           : in std_logic_vector(1 downto 0);
@@ -67,7 +68,7 @@ architecture Behavioral of top_HEX is
 			EN : out std_logic;
 			MAX10_CLK1_50 : in std_logic;
 			
-			LEDR : out std_logic_vector(7 downto 0);
+			LEDR : out std_logic_vector(9 downto 0);
 			state_set : in std_logic
 		);
 	end component;
@@ -79,11 +80,8 @@ architecture Behavioral of top_HEX is
 	signal Decode : std_logic_vector(4 downto 0);
 	signal Decode_prev: std_logic_vector(4 downto 0) := "10000";	 
 
-	type   state_type is (reset, digit1, digit2, digit3, op, digit4, digit5, digit6, input_final);
+	type   state_type is (reset, digit1, digit2, digit3, op, digit4, digit5, digit6, input_final, buff, buff2);
 	signal state : state_type := reset; --used as a FSM for keypad inputs
-	
-	type HEXstate_type is (HEXreset, HEXdigit1, HEXdigit2, HEXdigit3, op, HEXdigit4,HEXdigit5, HEXdigit6, HEXinput_final);
-	signal HEXstate : HEXstate_type  := HEXreset; --Created an option for HEX inputs
 	
 	
 	signal charSel_store : integer := 0; --used to hold the state of charSel
@@ -160,12 +158,31 @@ architecture Behavioral of top_HEX is
 	signal add_1      : integer;
 	signal sub_1      : integer;
 	
+	signal h1 : integer;
+	signal h2 : integer;
+	
 	signal disp : std_logic_vector(15 downto 0);
+	
+	signal disp_first_digit : std_logic_vector(7 downto 0); --8 bit
+	signal disp_first_digit_100 : integer;
+	signal disp_first_digit_10 : integer;
+	signal disp_first_digit_1 : integer;
+	
+	signal disp_second_digit: std_logic_vector(7 downto 0); --8 bit
+	
 	
 	signal disp_100 : integer;
 	signal disp_10 : integer;
 	signal disp_1 : integer;
+	
+	signal disp2_100 : integer;
+	signal disp2_10 : integer;
+	signal disp2_1 : integer;
+	
+	
 	signal remain : integer;
+	signal remain2 : integer;
+	
 	
 	signal clkCount : std_logic_vector(6 downto 0):= "0000000";								--MAX10_CLK1_50 divider count
 	signal oneUSClk : std_logic;																		--1 micro second clock signal
@@ -413,8 +430,13 @@ begin
 							disp_1   <= 0;
 							disp_10  <= 0;
 							disp_100 <= 0;
-							state           <= digit1;
 							
+							
+							
+							
+							
+							state           <= digit1;
+						
 						when digit1 =>
 							--enter first digit as 4 bit hex number. If A-F, the character will be 10-16 repsectively in decimal
 							if Decode_stable /= Decode_prev then
@@ -424,91 +446,115 @@ begin
 									when "01010" => --when A, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
 										charSel <= 1;
 										charSel2 <= 0;
+										
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
 										Decode_stable <= "10000"; --set to unpressed
 										Decode_prev <= "10000"; --set to unpressed
 										state <= digit2;
+										
 										
 									when "01011" => --when B, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
 										charSel <= 1;
 										charSel2 <= 1;
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
 										Decode_stable <= "10000"; --set to unpressed
 										Decode_prev <= "10000"; --set to unpressed
 										state <= digit2;
+										
 										
 									when "01100" => --when C, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
 										charSel <= 1;
 										charSel2 <= 2;
+										
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
 										Decode_stable <= "10000"; --set to unpressed
 										Decode_prev <= "10000"; --set to unpressed
 										state <= digit2;
+										
 										
 									when "01101" => --when D, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
 										charSel <= 1;
 										charSel2 <= 3;
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
 										Decode_stable <= "10000"; --set to unpressed
 										Decode_prev <= "10000"; --set to unpressed
 										state <= digit2;
+										
 										
 									when "01110" => --when E, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
 										charSel <= 1;
 										charSel2 <= 4;	
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
 										Decode_stable <= "10000"; --set to unpressed
 										Decode_prev <= "10000"; --set to unpressed
 										state <= digit2;
+										
 										
 									when "01111" => --when F, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
 										charSel <= 1;
 										charSel2 <= 5;
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
 										Decode_stable <= "10000"; --set to unpressed
 										Decode_prev <= "10000"; --set to unpressed
 										state <= digit2;
 								
+								
 									when others =>
-										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
+									
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0))); --converts to an integer
 										Decode_prev <= Decode_stable;
+										charSel <= 0;
+										charSel2 <= CharSel_store;
 										
 										
-										charSel <= CharSel_store;								
 										Decode_stable <= "10000"; --set to unpressed
 										Decode_prev <= "10000"; --set to unpressed
 										state <= digit2;
 								end case;													
 							end if;
 							
-
+							
 						when digit2 =>
 							if Decode_stable /= Decode_prev then
-								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
-								 Decode_prev <= Decode_stable;
-								 charSel2 <= CharSel_store;
-								 Decode_stable <= "10000"; --set to unpressed
-								 Decode_prev <= "10000"; --set to unpressed
-								 state <= digit3;
-							end if;
-				
 							
-						when digit3 =>
-							if Decode_stable /= Decode_prev then
-								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
-								--check if greater than 255
-								if verify_record_key > 255 then
-									--print on LCD screen "not allowed"
-									
-									state <= reset;
-								else
-									--record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
-									record_key <= verify_record_key;
+									record_key <= record_key * 16 + to_integer(unsigned(Decode_stable(3 downto 0)));
+									disp_first_digit <= std_logic_vector(to_unsigned(record_key, 8));
 									Decode_prev <= Decode_stable;
-									charSel3 <= CharSel_store;
+									
+									--if 1 and 0, then HEX is 00010000 and decimal is 16
+									--display 16
+									charSel <= record_key / 100;
+									CharSel2  <= (record_key / 10) mod 10;
+									CharSel3 <= record_key mod 10;
 									Decode_stable <= "10000"; --set to unpressed
-								   Decode_prev <= "10000"; --set to unpressed
-									state <= op;								
-								end if;
+									Decode_prev <= "10000"; --set to unpressed
+									state <= buff;
+							end if;
+							
+						when buff =>
+							if Decode_stable /= Decode_prev then
+									disp_first_digit <= std_logic_vector(to_unsigned(record_key, 8));
+									Decode_prev <= Decode_stable;
+									
+									--if 1 and 0, then HEX is 00010000 and decimal is 16
+									--display 16
+									charSel <= record_key / 100;
+									CharSel2  <= (record_key / 10) mod 10;
+									CharSel3 <= record_key mod 10;
+									Decode_stable <= "10000"; --set to unpressed
+									Decode_prev <= "10000"; --set to unpressed
+									state <= op;
 							end if;
 							
 							
 						when op =>
-							save_number1 <= record_key; --saves the first number
+							save_number1 <= record_key; --saves the first number as an integer
 							-- Select the operation to use
 							if Decode_stable /= Decode_prev then
 								
@@ -516,6 +562,8 @@ begin
 									when "01010" => --add
 										charSel4 <= CharSel_store;
 										Decode_prev <= Decode_stable;
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
 										state <= digit4;
 									
 									when "01011" => --subtract
@@ -550,71 +598,138 @@ begin
 									
 									when others => Decode_stable <= "10000";
 								end case;
-							
 							end if;
 	
 
-						when digit4 =>
-							--enter first digit
+						when digit4 => --after op
+							record_key <= 0;
+							--enter first digit as 4 bit hex number. If A-F, the character will be 10-16 repsectively in decimal
 							if Decode_stable /= Decode_prev then
 								
-								record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));         --records first number input and converts to integer
-								Decode_prev <= Decode_stable;
-								charSel5 <= CharSel_store;
-								Decode_stable <= "10000"; --set to unpressed
-								Decode_prev <= "10000"; --set to unpressed
-								state <= digit5;
+								--in this state, if decode_stable is A-F
+								case Decode_stable is
+									when "01010" => --when A, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
+										charSel5 <= 1;
+										charSel6 <= 0;
+										
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
+										state <= digit5;
+										
+										
+									when "01011" => --when B, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
+										charSel5 <= 1;
+										charSel6 <= 1;
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
+										state <= digit5;
+										
+										
+									when "01100" => --when C, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
+										charSel5 <= 1;
+										charSel6 <= 2;
+										
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
+										state <= digit5;
+										
+										
+									when "01101" => --when D, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
+										charSel5 <= 1;
+										charSel6 <= 3;
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
+										state <= digit5;
+										
+										
+									when "01110" => --when E, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
+										charSel5 <= 1;
+										charSel6 <= 4;	
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
+										state <= digit5;
+										
+										
+									when "01111" => --when F, make charSel1 = 1 and charSel = 0 and move to the third digit3 state
+										charSel5 <= 1;
+										charSel6 <= 5;
+										--saves the hex value as an integer
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0)));
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
+										state <= digit5;
+								
+								
+									when others =>
+									
+										record_key <= to_integer(unsigned(Decode_stable(3 downto 0))); --converts to an integer
+										Decode_prev <= Decode_stable;
+										charSel5 <= 0;
+										charSel6 <= CharSel_store;
+										
+										
+										Decode_stable <= "10000"; --set to unpressed
+										Decode_prev <= "10000"; --set to unpressed
+										state <= digit5;
+								end case;													
 							end if;
 
 						when digit5 =>
 							if Decode_stable /= Decode_prev then
-								 record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
-								 Decode_prev <= Decode_stable;
-								 charSel6 <= CharSel_store;
-								 Decode_stable <= "10000"; --set to unpressed
-								 Decode_prev <= "10000"; --set to unpressed
-								 state <= digit6;
-							end if;
-				
-							
-						when digit6 =>
-							if Decode_stable /= Decode_prev then
-								verify_record_key := record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
-								--check if greater than 255
-								if verify_record_key > 255 then
-									--print on LCD screen "not allowed"
-									
-									state <= reset;
-								else
-									--record_key <= record_key * 10 + to_integer(unsigned(Decode_stable(3 downto 0)));
-									record_key <= verify_record_key;
+									record_key <= record_key * 16 + to_integer(unsigned(Decode_stable(3 downto 0)));
+									disp_first_digit <= std_logic_vector(to_unsigned(record_key, 8));
 									Decode_prev <= Decode_stable;
-									charSel7 <= CharSel_store;
+									
+									--if 1 and 0, then HEX is 00010000 and decimal is 16
+									--display 16
+									charSel5 <= record_key / 100;
+									CharSel6 <= (record_key / 10) mod 10;
+									CharSel7 <= record_key mod 10;
 									Decode_stable <= "10000"; --set to unpressed
-								   Decode_prev <= "10000"; --set to unpressed
-									state <= input_final;								
-								end if;
+									Decode_prev <= "10000"; --set to unpressed
+									state <= buff2;							
 							end if;
+							
+							
+							when buff2 =>
+							if Decode_stable /= Decode_prev then
+									disp_first_digit <= std_logic_vector(to_unsigned(record_key, 8));
+									Decode_prev <= Decode_stable;
+									
+									--if 1 and 0, then HEX is 00010000 and decimal is 16
+									--display 16
+									charSel5 <= record_key / 100;
+									CharSel6 <= (record_key / 10) mod 10;
+									CharSel7 <= record_key mod 10;
+									Decode_stable <= "10000"; --set to unpressed
+									Decode_prev <= "10000"; --set to unpressed
+									save_number2 <= record_key;
+									state <= input_final;							
+							end if;
+							
 	
 						when input_final =>
-							save_number2 <= record_key;
+							--save_number2 <= record_key;
 							--send command to LCD that says "Press KEY01"
 							if KEY = "01" then
 								
 								case charSel4 is
 									when 10 =>
-										add_out <= save_number1 + save_number2;
-										--display new chars
-										disp <= std_logic_vector(to_unsigned(add_out, 16)); --disp is a 16-bit slv
+										add_out <= save_number1 + save_number2; --save_number1 and save_number2 are integers
 										
-										disp_1   <= add_out mod 10; -- Last digit
-										remain   <= add_out / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;
+										charSel9  <= add_out / 100;
+										CharSel10 <= (add_out / 10) mod 10;
+										CharSel11 <= add_out mod 10;
 										
 										
 										
@@ -622,14 +737,9 @@ begin
 										sub_out <= save_number1 - save_number2;
 										--display new chars
 										
-										disp_1   <= sub_out mod 10; -- Last digit
-										remain   <= sub_out / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;
+										charSel9  <= sub_out / 100;
+										CharSel10 <= (sub_out / 10) mod 10;
+										CharSel11 <= sub_out mod 10;
 										
 										
 										
@@ -637,40 +747,25 @@ begin
 										multiply_2 <= save_number1 * 2;
 										--display new chars
 										
-										disp_1   <= multiply_2 mod 10; -- Last digit
-										remain   <= multiply_2 / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;										
+										charSel9  <= multiply_2 / 100;
+										CharSel10 <= (multiply_2 / 10) mod 10;
+										CharSel11 <= multiply_2 mod 10;									
 										
 									when 13 =>
 										--convert to slv and shift 1 to the right
 										divide_2 <= save_number1 / 2;
 
-										disp_1   <= divide_2 mod 10; -- Last digit
-										remain   <= divide_2 / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;	
+										charSel9  <= divide_2 / 100;
+										CharSel10 <= (divide_2 / 10) mod 10;
+										CharSel11 <= divide_2 mod 10;
 										
 										
 									when 14 =>
 										add_1 <= save_number1 + 1;
 										--display new chars
-										disp_1   <= add_1 mod 10; -- Last digit
-										remain   <= add_1 / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;
+										charSel9  <= add_1 / 100;
+										CharSel10 <= (add_1 / 10) mod 10;
+										CharSel11 <= add_1 mod 10;
 										
 										
 										
@@ -678,42 +773,26 @@ begin
 										sub_1 <= save_number1 - 1;
 										--display new chars
 										
-										disp_1   <= sub_1 mod 10; -- Last digit
-										remain   <= sub_1 / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;
-										
+										charSel9  <= sub_1 / 100;
+										CharSel10 <= (sub_1 / 10) mod 10;
+										CharSel11 <= sub_1 mod 10;
 										
 									when 16 =>
 										multiply_4 <= save_number1 * 4;
 										--display new chars
 										
-										disp_1   <= multiply_4 mod 10; -- Last digit
-										remain   <= multiply_4 / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;
+										charSel9  <= multiply_4 / 100;
+										CharSel10 <= (multiply_4 / 10) mod 10;
+										CharSel11 <= multiply_4 mod 10;
 										
 										
 									when 17 =>
 										divide_4 <= save_number1 / 4;
 										--disp new chars
 										
-										disp_1   <= divide_4 mod 10; -- Last digit
-										remain   <= divide_4 / 10;   -- Remaining number
-										disp_10  <= remain mod 10;
-										disp_100 <= remain / 10;
-										
-										charSel9  <= disp_100;
-										charSel10 <= disp_10;
-										charSel11 <= disp_1;
+										charSel9  <= divide_4 / 100;
+										CharSel10 <= (divide_4 / 10) mod 10;
+										CharSel11 <= divide_4 mod 10;
 										
 										
 									when others => state <= input_final;
@@ -734,11 +813,18 @@ begin
 
 	--LEDR <= std_logic_vector(to_unsigned(record_key, 8)); --8 bits (display LED for debugging)
 	--LEDR <= std_logic_vector(to_unsigned(save_number1, 8)); --8 bits (display LED for debugging)
-
-	--LEDR <= std_logic_vector(to_unsigned(save_number2, 8)); --8 bits (display LED for debugging)
+	
+	--LEDR <= std_logic_vector(to_unsigned(save_number2, 10)); --8 bits (display LED for debugging)
+	
+	--check if LEDR is not 1
+	LEDR <= "1111111111" when add_out = 360 else
+			  "0000000000";
+	
+	
    --LEDR <= std_logic_vector(to_unsigned(add_out, 8));
    --LEDR <= std_logic_vector(to_unsigned(divide_2, 8));
    --LEDR <= std_logic_vector(to_unsigned(divide_4, 8));
+	
 
 
 	
