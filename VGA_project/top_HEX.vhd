@@ -1,6 +1,7 @@
 --Cebron Williams
 --update 12/04/2023: added support for multiple same inputs
 --added HEX functionality - the user enters a HEX value. As the user enters a HEX value, the display updates with the decimal equivalent
+--Modified the buffer states to allow for automatic HEX to decimal conversion. The user will only need to press the keypad twice
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.ALL;
@@ -538,7 +539,6 @@ begin
 							end if;
 							
 						when buff =>
-							if Decode_stable /= Decode_prev then
 									disp_first_digit <= std_logic_vector(to_unsigned(record_key, 8));
 									Decode_prev <= Decode_stable;
 									
@@ -549,9 +549,7 @@ begin
 									CharSel3 <= record_key mod 10;
 									Decode_stable <= "10000"; --set to unpressed
 									Decode_prev <= "10000"; --set to unpressed
-									state <= op;
-							end if;
-							
+									state <= op;							
 							
 						when op =>
 							save_number1 <= record_key; --saves the first number as an integer
@@ -702,7 +700,6 @@ begin
 							
 							
 							when buff2 =>
-							if Decode_stable /= Decode_prev then
 									disp_first_digit <= std_logic_vector(to_unsigned(record_key, 8));
 									Decode_prev <= Decode_stable;
 									
@@ -715,50 +712,50 @@ begin
 									Decode_prev <= "10000"; --set to unpressed
 									save_number2 <= record_key;
 									state <= input_final;							
-							end if;
 							
 	
 						when input_final =>
-							--save_number2 <= record_key;
 							--send command to LCD that says "Press KEY01"
 							if KEY = "01" then
 								
+								
+								
+								
+								
 								case charSel4 is
 									when 10 =>
-										add_out <= save_number1 + save_number2; --save_number1 and save_number2 are integers
-										
+										add_out <= save_number1 + save_number2;
 										charSel9  <= add_out / 100;
 										CharSel10 <= (add_out / 10) mod 10;
 										CharSel11 <= add_out mod 10;
 										
-										
-										
 									when 11 =>
 										sub_out <= save_number1 - save_number2;
-										--display new chars
-										
-										charSel9  <= sub_out / 100;
-										CharSel10 <= (sub_out / 10) mod 10;
-										CharSel11 <= sub_out mod 10;
-										
+										if sub_out < 0 then
+											state <= reset;
+										else
+											charSel9  <= sub_out / 100;
+											CharSel10 <= (sub_out / 10) mod 10;
+											CharSel11 <= sub_out mod 10;
+										end if;
 										
 										
 									when 12 =>
-										multiply_2 <= save_number1 * 2;
-										--display new chars
-										
+										multiply_2 <= save_number1 * 2;										
 										charSel9  <= multiply_2 / 100;
 										CharSel10 <= (multiply_2 / 10) mod 10;
 										CharSel11 <= multiply_2 mod 10;									
 										
 									when 13 =>
-										--convert to slv and shift 1 to the right
 										divide_2 <= save_number1 / 2;
-
-										charSel9  <= divide_2 / 100;
-										CharSel10 <= (divide_2 / 10) mod 10;
-										CharSel11 <= divide_2 mod 10;
-										
+										--only allow even division
+										if (divide_2 mod 2) /= 0 then
+											state <= reset;
+										else
+											charSel9  <= divide_2 / 100;
+											CharSel10 <= (divide_2 / 10) mod 10;
+											CharSel11 <= divide_2 mod 10;
+										end if;
 										
 									when 14 =>
 										add_1 <= save_number1 + 1;
@@ -767,38 +764,48 @@ begin
 										CharSel10 <= (add_1 / 10) mod 10;
 										CharSel11 <= add_1 mod 10;
 										
-										
-										
 									when 15 =>
 										sub_1 <= save_number1 - 1;
 										--display new chars
-										
-										charSel9  <= sub_1 / 100;
-										CharSel10 <= (sub_1 / 10) mod 10;
-										CharSel11 <= sub_1 mod 10;
-										
+										if sub_1 < 0 then
+											state <= reset;
+										else
+											charSel9  <= sub_1 / 100;
+											CharSel10 <= (sub_1 / 10) mod 10;
+											CharSel11 <= sub_1 mod 10;
+										end if;
 									when 16 =>
-										multiply_4 <= save_number1 * 4;
-										--display new chars
-										
-										charSel9  <= multiply_4 / 100;
-										CharSel10 <= (multiply_4 / 10) mod 10;
-										CharSel11 <= multiply_4 mod 10;
-										
-										
+										multiply_4 <= save_number1 * 4;										
+										--check if less than 1000 decimal:
+										if multiply_4 > 999 then
+											state <= reset;
+										else
+											charSel9  <= multiply_4 / 100;
+											CharSel10 <= (multiply_4 / 10) mod 10;
+											CharSel11 <= multiply_4 mod 10;
+										end if;
+																				
 									when 17 =>
 										divide_4 <= save_number1 / 4;
-										--disp new chars
-										
-										charSel9  <= divide_4 / 100;
-										CharSel10 <= (divide_4 / 10) mod 10;
-										CharSel11 <= divide_4 mod 10;
-										
+										--only allow even division
+										if (divide_4 mod 4) /= 0 then
+											state <= reset;
+										else
+											charSel9  <= divide_4 / 100;
+											CharSel10 <= (divide_4 / 10) mod 10;
+											CharSel11 <= divide_4 mod 10;
+										end if;
 										
 									when others => state <= input_final;
 								end case;
+								
+								
+								
+								
+								
+								
+								
 							end if;
-							
 						when others =>
 							state <= reset;
 					end case;
@@ -811,14 +818,15 @@ begin
 	end process;
 	
 
+	--test signals:
 	--LEDR <= std_logic_vector(to_unsigned(record_key, 8)); --8 bits (display LED for debugging)
 	--LEDR <= std_logic_vector(to_unsigned(save_number1, 8)); --8 bits (display LED for debugging)
-	
 	--LEDR <= std_logic_vector(to_unsigned(save_number2, 10)); --8 bits (display LED for debugging)
 	
-	--check if LEDR is not 1
-	LEDR <= "1111111111" when add_out = 360 else
-			  "0000000000";
+	
+	--check if LEDR is not 360 (replace with any integer value)
+	--LEDR <= "1111111111" when add_out = 360 else
+	--		  "0000000000";
 	
 	
    --LEDR <= std_logic_vector(to_unsigned(add_out, 8));
