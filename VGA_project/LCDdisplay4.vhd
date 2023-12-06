@@ -30,7 +30,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-entity LCDdisplay is
+entity LCDdisplay4 is
 		Port ( DB : out std_logic_vector(7 downto 4); --DB : out std_logic_vector(3 downto 0);
 				 RS : out std_logic;
 				 RW : out std_logic;
@@ -39,9 +39,9 @@ entity LCDdisplay is
 				 LEDR : out std_logic_vector(9 downto 0);
 				 r : in std_logic);  --reset FSM
 				 --KEY: in std_logic_vector(1 downto 0));
-end LCDdisplay;
+end LCDdisplay4;
 
-architecture Behavioral of LCDdisplay is
+architecture Behavioral of LCDdisplay4 is
 
 
 signal clkCount : std_logic_vector(6 downto 0):= "0000000";								--MAX10_CLK1_50 divider count
@@ -106,44 +106,44 @@ constant LCD_CMDS : LCD_CMDS_T := ( 0 => "00"&X"0", --PowerOn
 											  12 => "00"&X"2", --ReturnHome
 											  13 => "00"&X"9",
 											  14 => "00"&X"0", --Go to Address 0x10
-											  15 => "10"&X"4",
-											  16 => "10"&X"5", --"E"
-											  17 => "10"&X"6",
-											  18 => "10"&X"E", --"n"
-											  19 => "10"&X"7",
-											  20 => "10"&X"4", --"t"
-											  21 => "10"&X"6",
-											  22 => "10"&X"5", --"e"
+											  15 => "10"&X"5",
+											  16 => "10"&X"0", --"P"
+											  17 => "10"&X"7",
+											  18 => "10"&X"2", --"r"
+											  19 => "10"&X"6",
+											  20 => "10"&X"5", --"e"
+											  21 => "10"&X"7",
+											  22 => "10"&X"3", --"s"
 											  23 => "10"&X"7",
-											  24 => "10"&X"2", --"r"
+											  24 => "10"&X"3", --"s"
 											  25 => "10"&X"2",
 											  26 => "10"&X"0", --space
-											  27 => "10"&X"3",
-											  28 => "10"&X"1", --"1"
-											  29 => "10"&X"7",
-											  30 => "10"&X"3", --"s"
-											  31 => "10"&X"7",
-											  32 => "10"&X"4", --"t"
-											  33 => "10"&X"2",
-											  34 => "10"&X"0", --"space"
+											  27 => "10"&X"4",
+											  28 => "10"&X"B", --"K"
+											  29 => "10"&X"4",
+											  30 => "10"&X"5", --"E"
+											  31 => "10"&X"5",
+											  32 => "10"&X"9", --"Y"
+											  33 => "10"&X"3",
+											  34 => "10"&X"1", --"1"
 											  35 => "00"&X"D",
 											  36 => "00"&X"1", --Go to Address 0x50
-											  37 => "10"&X"6",
-											  38 => "10"&X"E", --"n"
-											  39 => "10"&X"7",
-											  40 => "10"&X"5", --"u"
-											  41 => "10"&X"6",
-											  42 => "10"&X"D", --"m"
-											  43 => "10"&X"6",
-											  44 => "10"&X"2", --"b"
+											  37 => "10"&X"7",
+											  38 => "10"&X"4", --"t"
+											  39 => "10"&X"6",
+											  40 => "10"&X"F", --"o"
+											  41 => "10"&X"2",
+											  42 => "10"&X"0", --"space"
+											  43 => "10"&X"7",
+											  44 => "10"&X"3", --"s"
 											  45 => "10"&X"6",
-											  46 => "10"&X"5", --"e"
-											  47 => "10"&X"7",
-											  48 => "10"&X"2", --"r"
-											  49 => "10"&X"2",
-											  50 => "10"&X"0", --"space"
-											  51 => "10"&X"2",
-											  52 => "10"&X"0", --"space"
+											  46 => "10"&X"F", --"o"
+											  47 => "10"&X"6",
+											  48 => "10"&X"C", --"l"
+											  49 => "10"&X"7",
+											  50 => "10"&X"6", --"v"
+											  51 => "10"&X"6",
+											  52 => "10"&X"5", --"e"
 											  53 => "00"&X"1",
 											  54 => "00"&X"8" --Shift Left
 											  );

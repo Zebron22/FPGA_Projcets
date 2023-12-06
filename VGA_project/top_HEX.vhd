@@ -60,19 +60,77 @@ architecture Behavioral of top_HEX is
       	DecodeOut : out  STD_LOGIC_VECTOR (4 downto 0) -- 5-bit output (the "10000" represents nothing pressed)
 		);
 	 end component;
-	 
+	
 	component LCDdisplay is
 		Port( 
 			DB : out std_logic_vector(7 downto 4); --DB : out std_logic_vector(3 downto 0);
 			RS : out std_logic;
 			RW : out std_logic;
 			EN : out std_logic;
-			MAX10_CLK1_50 : in std_logic;
-			
+			r : in std_logic;
 			LEDR : out std_logic_vector(9 downto 0);
-			state_set : in std_logic
-		);
+			MAX10_CLK1_50 : in std_logic);
 	end component;
+	
+	component LCDdisplay2 is
+		Port( 
+			DB : out std_logic_vector(7 downto 4); --DB : out std_logic_vector(3 downto 0);
+			RS : out std_logic;
+			RW : out std_logic;
+			EN : out std_logic;
+			r : in std_logic;
+			LEDR : out std_logic_vector(9 downto 0);
+			MAX10_CLK1_50 : in std_logic);
+	end component;
+
+	component LCDdisplay3 is
+		Port( 
+			DB : out std_logic_vector(7 downto 4); --DB : out std_logic_vector(3 downto 0);
+			RS : out std_logic;
+			RW : out std_logic;
+			EN : out std_logic;
+			r : in std_logic;
+			LEDR : out std_logic_vector(9 downto 0);
+			MAX10_CLK1_50 : in std_logic);
+	end component;	
+	
+	component LCDdisplay4 is
+		Port( 
+			DB : out std_logic_vector(7 downto 4); --DB : out std_logic_vector(3 downto 0);
+			RS : out std_logic;
+			RW : out std_logic;
+			EN : out std_logic;
+			r : in std_logic;
+			LEDR : out std_logic_vector(9 downto 0);
+			MAX10_CLK1_50 : in std_logic);
+	end component;	
+	
+	signal DB1 : std_logic_vector(3 downto 0);
+	signal RS1 : std_logic;
+	signal RW1 : std_logic;
+	signal EN1 : std_logic;	
+	
+	signal DB2 : std_logic_vector(3 downto 0);
+	signal RS2 : std_logic;
+	signal RW2 : std_logic;
+	signal EN2 : std_logic;
+	
+	signal DB3 : std_logic_vector(3 downto 0);
+	signal RS3 : std_logic;
+	signal RW3 : std_logic;
+	signal EN3 : std_logic;
+	
+	
+	signal DB4 : std_logic_vector(3 downto 0);
+	signal RS4 : std_logic;
+	signal RW4 : std_logic;
+	signal EN4 : std_logic;
+	
+	signal r   : std_logic; --enter first number
+	signal r2  : std_logic;	--enter second number
+	signal r3  : std_logic; --enter op (operation)
+	signal r4  : std_logic;
+	
 	
 	signal x, y : STD_LOGIC_VECTOR(9 downto 0);
 	signal clock25MHz : STD_LOGIC; -- 25 MHz clock signal
@@ -172,24 +230,10 @@ architecture Behavioral of top_HEX is
 	signal disp_second_digit: std_logic_vector(7 downto 0); --8 bit
 	
 	
-	signal disp_100 : integer;
-	signal disp_10 : integer;
-	signal disp_1 : integer;
-	
-	signal disp2_100 : integer;
-	signal disp2_10 : integer;
-	signal disp2_1 : integer;
-	
-	
-	signal remain : integer;
-	signal remain2 : integer;
-	
 	
 	signal clkCount : std_logic_vector(6 downto 0):= "0000000";								--MAX10_CLK1_50 divider count
 	signal oneUSClk : std_logic;																		--1 micro second clock signal
 	
-	
-	signal state_set : std_logic := '0';
 	
 begin
 	
@@ -229,9 +273,71 @@ begin
 	PatternInstance10: tvPattern port map (x => x, y => y, charX => charX10, charY => charY, red => red10, green => green10, blue => blue10, charSel => charSel10);
 	PatternInstance11: tvPattern port map (x => x, y => y, charX => charX11, charY => charY, red => red11, green => green11, blue => blue11, charSel => charSel11);
 
-	LCDdisplayInstance: LCDdisplay port map (DB => DB, RS => RS, RW => RW, EN => EN, MAX10_CLK1_50 => MAX10_CLK1_50, state_set => state_set);
 	
+--LCD stuff
+pattern1 : LCDdisplay   port map(MAX10_CLK1_50 => MAX10_CLK1_50, DB => DB1, RS => RS1, RW => RW1, EN => EN1, r => r);
+pattern2 : LCDdisplay2  port map(MAX10_CLK1_50 => MAX10_CLK1_50, DB => DB2, RS => RS2, RW => RW2, EN => EN2, r => r2);
+pattern3 : LCDdisplay3  port map(MAX10_CLK1_50 => MAX10_CLK1_50, DB => DB3, RS => RS3, RW => RW3, EN => EN3, r => r3);
+pattern4 : LCDdisplay4  port map(MAX10_CLK1_50 => MAX10_CLK1_50, DB => DB4, RS => RS4, RW => RW4, EN => EN4, r => r4);
+
+
+--process for LCD patterns
+process(MAX10_CLK1_50, DB1, RS1, RW1, EN1, r, DB2, RS2, RW2, EN2, r2 , DB3, RS3, RW3, EN3, r3, DB4, RS4, RW4, EN4, r4)
+begin
+if rising_edge(MAX10_CLK1_50) then
+	if state = digit4 then
+		--disable r and enable r2
+		r  <= '1';   --disabled r
+		r2 <= '0';   --enables pattern2
+		r3 <= '1';
+		r4 <= '1';
+		DB <= DB2;
+		RS <= RS2;
+		RW <= RW2;
+		EN <= EN2;
 	
+	elsif state = op then
+		r4 <= '1';
+		r3 <= '0';  --enables pattern3
+		r2 <= '1';
+		r <= '1';
+		DB <= DB3;
+		RS <= RS3;
+		RW <= RW3;
+		EN <= EN3;
+		
+	elsif state = input_final then
+		r4 <= '0'; --enables pattern4
+		r3 <= '1';  
+		r2 <= '1';
+		r <=  '1';
+		DB <= DB4;
+		RS <= RS4;
+		RW <= RW4;
+		EN <= EN4;
+	
+	elsif SW = "11" then
+		--disable all patterns
+		r4 <= '1';		
+		r3 <= '1';
+		r2 <= '1';
+		r <=  '1';
+		
+	else
+		--connect pattern 1 and resume. Disable pattern2
+		r4 <= '1';		
+		r3 <= '1';
+		r2 <= '1';  --disabled r2
+		r  <= '0';  --enabled pattern1
+		DB <= DB1;
+		RS <= RS1;
+		RW <= RW1;
+		EN <= EN1;
+		
+	end if;
+end if;
+end process;
+
 	
 	
 	
@@ -383,11 +489,10 @@ begin
 	--main FSM that displays the characters (HEX)
 	--Numbers are inputted as HEX. When the numbers are imputted as HEX, the value will be displayed in decimal
 	--EX: Press A, 10 is displayed
-	--I only need two inputs?
-	
+
 	
 	--Main FSM that displays the characters (decimal)
-	process(oneUSClk, clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY)
+	process(oneUSClk, clock100ms, Decode, Decode_prev, state, Decode_stable, charSel_store, charSel, charSel2, charSel3, charSel4, charSel5, charSel6, charSel7, charSel8, charSel9, charSel10, charSel11, KEY,      DB1, RS1, RW1, EN1, r, DB2, RS2, RW2, EN2, r2 , DB3, RS3, RW3, EN3, r3)
 	variable verify_record_key: integer;
 	variable valid_range      : integer;	
 	begin
@@ -427,16 +532,9 @@ begin
 							divide_4       <= 0;
 							add_1          <= 0;
 							sub_1      		<= 0;
+													
 							
-							disp_1   <= 0;
-							disp_10  <= 0;
-							disp_100 <= 0;
-							
-							
-							
-							
-							
-							state           <= digit1;
+							state <= digit1;
 						
 						when digit1 =>
 							--enter first digit as 4 bit hex number. If A-F, the character will be 10-16 repsectively in decimal
@@ -717,10 +815,6 @@ begin
 						when input_final =>
 							--send command to LCD that says "Press KEY01"
 							if KEY = "01" then
-								
-								
-								
-								
 								
 								case charSel4 is
 									when 10 =>

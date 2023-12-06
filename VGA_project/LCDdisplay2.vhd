@@ -30,7 +30,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-entity LCDdisplay is
+entity LCDdisplay2 is
 		Port ( DB : out std_logic_vector(7 downto 4); --DB : out std_logic_vector(3 downto 0);
 				 RS : out std_logic;
 				 RW : out std_logic;
@@ -39,9 +39,9 @@ entity LCDdisplay is
 				 LEDR : out std_logic_vector(9 downto 0);
 				 r : in std_logic);  --reset FSM
 				 --KEY: in std_logic_vector(1 downto 0));
-end LCDdisplay;
+end LCDdisplay2;
 
-architecture Behavioral of LCDdisplay is
+architecture Behavioral of LCDdisplay2 is
 
 
 signal clkCount : std_logic_vector(6 downto 0):= "0000000";								--MAX10_CLK1_50 divider count
@@ -119,11 +119,11 @@ constant LCD_CMDS : LCD_CMDS_T := ( 0 => "00"&X"0", --PowerOn
 											  25 => "10"&X"2",
 											  26 => "10"&X"0", --space
 											  27 => "10"&X"3",
-											  28 => "10"&X"1", --"1"
-											  29 => "10"&X"7",
-											  30 => "10"&X"3", --"s"
-											  31 => "10"&X"7",
-											  32 => "10"&X"4", --"t"
+											  28 => "10"&X"2", --"2"
+											  29 => "10"&X"6",
+											  30 => "10"&X"E", --"n"
+											  31 => "10"&X"6",
+											  32 => "10"&X"4", --"d"
 											  33 => "10"&X"2",
 											  34 => "10"&X"0", --"space"
 											  35 => "00"&X"D",
