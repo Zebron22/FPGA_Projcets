@@ -3,6 +3,7 @@
 --added HEX functionality - the user enters a HEX value. As the user enters a HEX value, the display updates with the decimal equivalent
 --Modified the buffer states to allow for automatic HEX to decimal conversion. The user will only need to press the keypad twice
 --update 12/06/2023: added proper LCD transition states
+--update 12/07/2023: removed the division by 2 and division by 4 functionality to support integer division
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.ALL;
