@@ -2,6 +2,7 @@
 --update 12/04/2023: added support for multiple same inputs
 --added HEX functionality - the user enters a HEX value. As the user enters a HEX value, the display updates with the decimal equivalent
 --Modified the buffer states to allow for automatic HEX to decimal conversion. The user will only need to press the keypad twice
+--update 12/06/2023: added proper LCD transition states
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.ALL;
@@ -843,13 +844,14 @@ end process;
 									when 13 =>
 										divide_2 <= save_number1 / 2;
 										--only allow even division
-										if (divide_2 mod 2) /= 0 then
-											state <= reset;
-										else
+										
+										--if (divide_2 mod 2) /= 0 then
+										--	state <= reset;
+										--else
 											charSel9  <= divide_2 / 100;
 											CharSel10 <= (divide_2 / 10) mod 10;
 											CharSel11 <= divide_2 mod 10;
-										end if;
+										--end if;
 										
 									when 14 =>
 										add_1 <= save_number1 + 1;
@@ -882,13 +884,13 @@ end process;
 									when 17 =>
 										divide_4 <= save_number1 / 4;
 										--only allow even division
-										if (divide_4 mod 4) /= 0 then
-											state <= reset;
-										else
+										--if (divide_4 mod 4) /= 0 then
+										--	state <= reset;
+										--else
 											charSel9  <= divide_4 / 100;
 											CharSel10 <= (divide_4 / 10) mod 10;
 											CharSel11 <= divide_4 mod 10;
-										end if;
+										--end if;
 										
 									when others => state <= input_final;
 								end case;
