@@ -2,6 +2,7 @@
 
 The setup is a digilent 4x4 keypad module, a VGA monitor, and a digilent 16x2 LCD display.
 I also used a DE10 lite with these PMODs. Custom wiring will be needed and can be found in the csv file.
+The PDF is included, there may be some inconsistencies. 
 
 Contains 8 operations:
 * Add
